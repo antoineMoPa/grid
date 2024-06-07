@@ -1,0 +1,44 @@
+table {
+    border-collapse: collapse;
+    margin: auto;
+
+    td {
+        background: #333;
+        width: 20px;
+        height: 20px;
+        min-width: 20px;
+        min-height: 20px;
+        max-width: 20px;
+        max-height: 20px;
+        padding: 0;
+        cursor: pointer;
+        user-select: none;
+
+        font-size: 8px;
+        text-align: center;
+
+        &:hover {
+            background: #555;
+        }
+
+        &:active {
+            background: #aaa;
+            color: #000;
+        }
+
+        &.active {
+            background: #aaa;
+            color: #000;
+        }
+
+        &.focused {
+            background: #caa;
+            color: #000;
+        }
+    }
+}
+
+.generation {
+    margin: 0;
+    padding: 0;
+}
