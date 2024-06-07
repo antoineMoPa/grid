@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import classNames from 'classnames'
 
@@ -14,7 +14,7 @@ class GameEngine {
     WIDTH = 30;
     grid = tf.ones([this.HEIGHT, this.WIDTH]).mul(-1);
     activeCells = tf.zeros([this.HEIGHT, this.WIDTH]);
-    focusedCell = [0, 0];
+    focusedCell: [number, number] = [0, 0];
     actionQueue: Array<Function> = [];
     generation = 0;
     hasWon = false;
@@ -23,8 +23,8 @@ class GameEngine {
 
     constructor() {
         // initialize first activeCell
-        const activeCells = this.activeCells.arraySync();
-        const grid = this.grid.arraySync();
+        const activeCells = this.activeCells.arraySync() as number[][];
+        const grid = this.grid.arraySync() as number[][];
         activeCells[this.focusedCell[0]][this.focusedCell[1]] = 1;
         grid[this.focusedCell[0]][this.focusedCell[1]] = 25;
         this.activeCells = tf.tensor(activeCells);
@@ -69,13 +69,16 @@ class GameEngine {
         this.actionQueue.push(action);
     }
 
-    checkBounds([i, j]) {
+    checkBounds([i, j]: [number, number]) {
         return i >= 0 && i < this.WIDTH && j >= 0 && j < this.HEIGHT;
     }
 
-    moveTo({initialCellPositon, destinationCellPosition}) {
-        const activeCells = this.activeCells.arraySync();
-        const grid = this.grid.arraySync();
+    moveTo(
+        {initialCellPositon, destinationCellPosition}:
+        {initialCellPositon: [number, number], destinationCellPosition: [number, number]}
+    ) {
+        const activeCells = this.activeCells.arraySync() as number[][];
+        const grid = this.grid.arraySync() as number[][];
 
         if (!this.checkBounds(initialCellPositon) || !this.checkBounds(destinationCellPosition)) {
             return;
@@ -108,29 +111,36 @@ class GameEngine {
         this.onUpdateCallback();
     }
 
-    trySetFocusedCell([i, j]) {
-        if (i < 0 || i >= this.WIDTH || j < 0 || j >= this.HEIGHT) {
+    onCellClick([i, j]: [number, number]) {
+        if (!this.checkBounds([i, j])) {
             return;
         }
 
-        const activeCells = this.activeCells.arraySync();
+        const activeCells = this.activeCells.arraySync() as number[][];
 
-        let neighbors = 0;
-
-
-        neighbors += activeCells[i-1]?.[j] || 0;
-        neighbors += activeCells[i+1]?.[j] || 0;
-        neighbors += activeCells[i]?.[j+1] || 0;
-        neighbors += activeCells[i]?.[j-1] || 0;
-
-        if (neighbors > 0) {
-            this.focusedCell = [i, j];
-            activeCells[i][j] = 1;
+        // Check if any neighbor cell is active
+        let hasActiveNeighbor = false;
+        if (i > 0 && activeCells[i - 1][j] === 1) {
+            hasActiveNeighbor = true;
+        }
+        if (i < (this.grid.shape[0] as number) - 1 && activeCells[i + 1][j] === 1) {
+            hasActiveNeighbor = true;
+        }
+        if (j > 0 && activeCells[i][j - 1] === 1) {
+            hasActiveNeighbor = true;
+        }
+        if (j < (this.grid.shape[1] as number) - 1 && activeCells[i][j + 1] === 1) {
+            hasActiveNeighbor = true;
         }
 
-        this.activeCells = tf.tensor(activeCells);
+        if (!hasActiveNeighbor) {
+            return;
+        }
 
-        this.onUpdateCallback();
+        this.moveTo({
+            initialCellPositon: this.focusedCell,
+            destinationCellPosition: [i, j]
+        });
     }
 
     step() {
@@ -138,19 +148,19 @@ class GameEngine {
             return;
         }
 
-        const grid = structuredClone(this.grid.arraySync());
-        const activeCells = this.activeCells.arraySync();
+        const grid = structuredClone(this.grid.arraySync()) as number[][];
+        const activeCells = this.activeCells.arraySync() as number[][];
 
         // Process actions
         while (this.actionQueue.length > 0) {
             // Call action with this as context
-            this.actionQueue.shift().call(this);
+            (this.actionQueue.shift() as () => void).call(this);
         }
 
         if (this.generation % 5 === 0) {
             // Each cell increases by 1 if it is active
-            for (let i = 0; i < this.grid.shape[0]; i++) {
-                for (let j = 0; j < this.grid.shape[1]; j++) {
+            for (let i = 0; i < (this.grid.shape[0] as number); i++) {
+                for (let j = 0; j < (this.grid.shape[1] as number); j++) {
                     if (activeCells[i][j] === 1) {
                         grid[i][j]++;
                     } else if (this.generation % 40 === 0 && this.generation > 0){
@@ -169,10 +179,10 @@ class GameEngine {
     }
 
     detectWin() {
-        const activeCells = this.activeCells.arraySync();
+        const activeCells = this.activeCells.arraySync() as number[][];
         let win = true;
-        for (let i = 0; i < this.grid.shape[0]; i++) {
-            for (let j = 0; j < this.grid.shape[1]; j++) {
+        for (let i = 0; i < (this.grid.shape[0] as number); i++) {
+            for (let j = 0; j < (this.grid.shape[1] as number); j++) {
                 if (activeCells[i][j] !== 1) {
                     win = false;
                     break;
@@ -206,11 +216,11 @@ function App() {
     // Loop through the grid show a table cell for each cell
     const rows = [];
 
-    const currentGrid = gameEngine.grid.arraySync();
-    const currentActiveCells = gameEngine.activeCells.arraySync();
+    const currentGrid = gameEngine.grid.arraySync() as number[][];
+    const currentActiveCells = gameEngine.activeCells.arraySync() as number[][];
 
-    const onCellClick = (i, j) => {
-        gameEngine.trySetFocusedCell([i, j]);
+    const onCellClick = ([i, j]: [number, number]) => {
+        gameEngine.onCellClick([i, j]);
     };
 
     // Every second, increase active cells
@@ -223,9 +233,9 @@ function App() {
         return () => clearInterval(interval);
     }, [gameEngine, generation]);
 
-    for (let i = 0; i < gameEngine.grid.shape[0]; i++) {
+    for (let i = 0; i < (gameEngine.grid.shape[0] as number); i++) {
         const cells = [];
-        for (let j = 0; j < gameEngine.grid.shape[1]; j++) {
+        for (let j = 0; j < (gameEngine.grid.shape[1] as number); j++) {
 
             cells.push(
                 <td
@@ -234,7 +244,7 @@ function App() {
                         active: currentActiveCells[i][j] === 1,
                         focused: gameEngine.focusedCell[0] === i && gameEngine.focusedCell[1] === j
                     })}
-                    onClick={() => onCellClick(i, j)}
+                    onClick={() => onCellClick([i, j])}
                 >
                     {currentGrid[i][j]}
                 </td>
