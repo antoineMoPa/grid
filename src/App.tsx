@@ -172,10 +172,11 @@ class GameEngine {
             }
         }
 
-        this.detectWin();
-
         this.grid = tf.tensor(grid);
-        this.generation++;
+
+        if (!this.detectWin()) {
+            this.generation++;
+        }
     }
 
     detectWin() {
@@ -194,6 +195,8 @@ class GameEngine {
             this.hasWon = true;
             alert('You win!');
         }
+
+        return win;
     }
 }
 
@@ -255,7 +258,7 @@ function App() {
 
     return (
         <>
-            <p className="generation">Generation {generation}</p>
+            <p className="generation">Generation {gameEngine.generation}</p>
             <table>
                 <tbody>
                     {rows}
