@@ -291,7 +291,7 @@ export class GameEngine {
 
         this.stats.activeCellCount = activeCellsCount;
         this.stats.virusCellCount = virusCellsCount;
-        this.stats.wasFocusedCellEaten = this.virusCells.arraySync()[this.focusedCell[0]][this.focusedCell[1]] === 1;
+        this.stats.wasFocusedCellEaten = (this.virusCells.arraySync() as number[][])[this.focusedCell[0]][this.focusedCell[1]] === 1;
 
         this.onUpdateCallback();
 
