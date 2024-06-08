@@ -1,12 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 table {
     border-collapse: collapse;
     margin: auto;
     border-radius: 3px;
     overflow: hidden;
-    box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
 
     td {
         background: #333;
+        border: 1px solid #222;
+        border-radius: 3px;
         width: 20px;
         height: 20px;
         min-width: 20px;
@@ -48,5 +54,7 @@ table {
 
 .generation {
     margin: 0;
-    padding: 0;
+    padding: 0.5rem;
+    background: #333;
+    display: inline-block;
 }

@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 import classNames from 'classnames'
 
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
+import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure} from "@nextui-org/react";
+
 
 tf.setBackend('webgl').then(() => {
     console.log('WebGL backend initialized');
@@ -23,13 +25,25 @@ class GameEngine {
     onUpdateCallback = () => {};
 
     constructor() {
+        this.resetGame();
+    }
+
+    resetGame() {
+        this.grid = tf.ones([this.HEIGHT, this.WIDTH]).mul(-1);
+        this.activeCells = tf.zeros([this.HEIGHT, this.WIDTH]);
+        this.virusCells = tf.zeros([this.HEIGHT, this.WIDTH]);
+        this.focusedCell = [0, 0];
+        this.actionQueue = [];
+        this.generation = 0;
+        this.hasWon = false;
+
         // initialize first activeCell
         const activeCells = this.activeCells.arraySync() as number[][];
         const grid = this.grid.arraySync() as number[][];
         const virusCells = this.virusCells.arraySync() as number[][];
         activeCells[this.focusedCell[0]][this.focusedCell[1]] = 1;
         virusCells[this.HEIGHT -1][this.WIDTH - 1] = 1;
-        grid[this.focusedCell[0]][this.focusedCell[1]] = 25;
+        grid[this.focusedCell[0]][this.focusedCell[1]] = 50;
         this.activeCells = tf.tensor(activeCells);
         this.grid = tf.tensor(grid);
         this.virusCells = tf.tensor(virusCells);
@@ -291,6 +305,8 @@ class GameEngine {
 
 function App() {
     const gameEngineRef = useRef<null | GameEngine>(null);
+    const {isOpen, onOpen, onOpenChange} = useDisclosure();
+
     if (!gameEngineRef.current) {
         gameEngineRef.current = new GameEngine();
         gameEngineRef.current.bindEvents();
@@ -321,6 +337,10 @@ function App() {
         const interval = setInterval(() => {
             gameEngine.step();
             setGeneration(generation + 1);
+
+            if (gameEngine.hasWon) {
+                onOpen();
+            }
         }, 1000);
 
         return () => clearInterval(interval);
@@ -340,12 +360,17 @@ function App() {
                     })}
                     onClick={() => onCellClick([i, j])}
                 >
-                    {grid[i][j]}
+                    {virusCells[i][j] === 1 && grid[i][j]}
+                    {activeCells[i][j] === 1 && grid[i][j]}
                 </td>
             )
         }
         rows.push(<tr key={i}>{cells}</tr>)
     }
+
+    const onClose = useCallback(() => {
+        gameEngineRef.current.resetGame();
+    }, []);
 
     return (
         <>
@@ -355,6 +380,26 @@ function App() {
                     {rows}
                 </tbody>
             </table>
+            <>
+                <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={onClose}>
+                    <ModalContent>
+                        {(onClose) => (
+                            <>
+                                <ModalHeader className="flex flex-col gap-1">You Won!</ModalHeader>
+                                <ModalBody>
+                                    <p>Congratulations!</p>
+                                    <p>You have successfully eradicated the virus from the grid.</p>
+                                </ModalBody>
+                                <ModalFooter>
+                                    <Button color="primary" onPress={onClose}>
+                                        Play Again
+                                    </Button>
+                                </ModalFooter>
+                            </>
+                        )}
+                    </ModalContent>
+                </Modal>
+            </>
         </>
     )
 }
