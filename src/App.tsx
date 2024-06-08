@@ -7,6 +7,7 @@ import '@tensorflow/tfjs-backend-webgl';
 import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure} from "@nextui-org/react";
 
 const GAME_INTERVAL = 1000;
+const VIRUS_MOVE_RATE = 0.3;
 
 tf.setBackend('webgl').then(() => {
     console.log('WebGL backend initialized');
@@ -15,7 +16,7 @@ tf.setBackend('webgl').then(() => {
 class GameEngine {
     HEIGHT = 25;
     WIDTH = 30;
-    grid = tf.ones([this.HEIGHT, this.WIDTH]).mul(-1);
+    grid = tf.ones([this.HEIGHT, this.WIDTH]);
     activeCells = tf.zeros([this.HEIGHT, this.WIDTH]);
     virusCells = tf.zeros([this.HEIGHT, this.WIDTH]);
     focusedCell: [number, number] = [0, 0];
@@ -34,7 +35,8 @@ class GameEngine {
         this.grid = tf.ones([this.HEIGHT, this.WIDTH]).mul(-1);
         this.activeCells = tf.zeros([this.HEIGHT, this.WIDTH]);
         this.virusCells = tf.zeros([this.HEIGHT, this.WIDTH]);
-        this.focusedCell = [0, 0];
+        const initialFocussedCell: [number, number] = [Math.floor(Math.random() * this.HEIGHT), Math.floor(Math.random() * this.WIDTH)];
+        this.focusedCell = initialFocussedCell;
         this.actionQueue = [];
         this.generation = 0;
         this.hasWon = false;
@@ -43,9 +45,16 @@ class GameEngine {
         // initialize first activeCell
         const activeCells = this.activeCells.arraySync() as number[][];
         const grid = this.grid.arraySync() as number[][];
+
+        // initialize a few virus cells
         const virusCells = this.virusCells.arraySync() as number[][];
+        for (let i = 0; i < 5; i++) {
+            const virusCell = [Math.floor(Math.random() * this.HEIGHT), Math.floor(Math.random() * this.WIDTH)];
+            virusCells[virusCell[0]][virusCell[1]] = 1;
+            grid[virusCell[0]][virusCell[1]] = 1;
+        }
+
         activeCells[this.focusedCell[0]][this.focusedCell[1]] = 1;
-        virusCells[this.HEIGHT -1][this.WIDTH - 1] = 1;
         grid[this.focusedCell[0]][this.focusedCell[1]] = 50;
         this.activeCells = tf.tensor(activeCells);
         this.grid = tf.tensor(grid);
@@ -126,8 +135,8 @@ class GameEngine {
             moveCost = grid[d[0]][d[1]];
         }
         // Check if the destination cell is an active cell
-        else if (playerCells[d[0]][d[1]] === 1) {
-            moveCost = 0;
+        else if (playerCells[d[0]][d[1]] > 0 && playerCells[s[0]][s[1]] > 0) {
+            moveCost = -grid[d[0]][d[1]];
         }
         else {
             moveCost = -grid[d[0]][d[1]];
@@ -143,9 +152,8 @@ class GameEngine {
         }
 
         // Move all content from the initial cell to the destination cell
-        const initialContent = grid[s[0]][s[1]];
         grid[s[0]][s[1]] = 0;
-        grid[d[0]][d[1]] += initialContent - moveCost;
+        grid[d[0]][d[1]] = initialCellValue - moveCost;
 
         playerCells[d[0]][d[1]] = 1;
         enemyCells[d[0]][d[1]] = 0;
@@ -212,13 +220,14 @@ class GameEngine {
         this.onUpdateCallback();
     }
 
-
     onCellClick([i, j]: [number, number]) {
         const activeCells = this.activeCells.arraySync() as number[][];
 
         if (activeCells[i][j] === 1) {
             this.focusedCell = [i, j];
         }
+
+        this.onUpdateCallback();
     }
 
     step() {
@@ -247,7 +256,7 @@ class GameEngine {
                     } else if (virusCells[i][j] === 1) {
                         grid[i][j]++;
 
-                        if (this.generation % 4 === 0) {
+                        if (Math.random() < VIRUS_MOVE_RATE) {
                             // Move virus in random direction
                             const directions: [number, number][] = [
                                 [i - 1, j],
@@ -310,7 +319,7 @@ const gameLostMessage = () => {
             <ModalHeader className="flex flex-col gap-1">You Lost!</ModalHeader>
             <ModalBody>
                 <p>Ouch!</p>
-                <p>The virus has taken over the grid.</p>
+                <p>The virus has destroyed you...</p>
             </ModalBody>
         </>
     );
