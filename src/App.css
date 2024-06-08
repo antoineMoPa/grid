@@ -55,7 +55,6 @@ table {
 .generation {
     margin: 0;
     padding: 0.5rem 1rem;
-    background: #333;
     display: inline-block;
 }
 
@@ -67,5 +66,28 @@ table {
 
     .stats {
         margin-bottom: 1rem;
+    }
+}
+
+.bottom-right-bar {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin: 1rem;
+}
+
+.bottom-left-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    margin: 1rem;
+    opacity: 0.4;
+
+    &:hover {
+        opacity: 1;
+    }
+
+    h2 {
+        font-weight: 600;
     }
 }

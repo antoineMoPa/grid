@@ -114,7 +114,17 @@ function App() {
                     <p>You: {gameEngine.stats.activeCellCount}</p>
                     <p>Virus: {gameEngine.stats.virusCellCount}</p>
                 </div>
-                <Button className="surrender" onClick={surrender}>Surrender</Button>
+            </div>
+            <div className="bottom-left-bar">
+                <h2>Instructions:</h2>
+                <p>Use mouse to change active cell.</p>
+                <p>Use arrows to move around.</p>
+                <p>Collect numbers and use these to fight the virus.</p>
+                <br/>
+                <p>Eradicate the virus to win!</p>
+            </div>
+            <div className="bottom-right-bar">
+                <Button className="surrender" onClick={surrender}>Start Over</Button>
             </div>
             <table>
                 <tbody>
