@@ -298,6 +298,8 @@ class GameEngine {
             this.hasLost = true;
             return true;
         }
+
+        return false;
     }
 }
 
@@ -392,7 +394,7 @@ function App() {
     }
 
     const onClose = useCallback(() => {
-        gameEngineRef.current.resetGame();
+        gameEngineRef.current?.resetGame();
     }, []);
 
     return (
