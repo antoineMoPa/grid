@@ -99,7 +99,7 @@ function App() {
     }
 
     const onClose = useCallback(() => {
-        gameEngineRef.current.resetGame();
+        gameEngineRef.current?.resetGame();
     }, []);
 
     const surrender = useCallback(() => {
