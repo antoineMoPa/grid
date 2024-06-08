@@ -8,6 +8,7 @@ table {
     border-radius: 3px;
     overflow: hidden;
     box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+    margin-top: 1rem;
 
     td {
         background: #333;
@@ -52,9 +53,15 @@ table {
     }
 }
 
+.top-left-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 1rem;
+}
+
 .generation {
     margin: 0;
-    padding: 0.5rem 1rem;
     display: inline-block;
 }
 

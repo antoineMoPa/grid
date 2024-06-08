@@ -124,7 +124,16 @@ function App() {
 
     return (
         <>
-            <p className="generation">Generation {gameEngine.generation}</p>
+            <div className="top-left-bar">
+                <p className="generation">Generation {gameEngine.generation}</p>
+                {
+                    gameEngine.stats.wasFocusedCellEaten &&
+                        <p>
+                            Your active cell was eaten!<br/>
+                            Click one of your other cells to continue.
+                        </p>
+                }
+            </div>
             <div className="top-right-bar">
                 <div className="stats">
                     <p>You: {gameEngine.stats.activeCellCount}</p>
