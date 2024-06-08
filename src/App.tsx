@@ -109,7 +109,11 @@ function App() {
     return (
         <>
             <p className="generation">Generation {gameEngine.generation}</p>
-            <div>
+            <div className="top-right-bar">
+                <div className="stats">
+                    <p>You: {gameEngine.stats.activeCellCount}</p>
+                    <p>Virus: {gameEngine.stats.virusCellCount}</p>
+                </div>
                 <Button className="surrender" onClick={surrender}>Surrender</Button>
             </div>
             <table>

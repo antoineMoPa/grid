@@ -13,10 +13,14 @@ export class GameEngine {
     activeCells = tf.zeros([this.HEIGHT, this.WIDTH]);
     virusCells = tf.zeros([this.HEIGHT, this.WIDTH]);
     focusedCell: [number, number] = [0, 0];
-    actionQueue: Array<Function> = [];
+    actionQueue: Array<() => void> = [];
     generation = 0;
     hasWon = false;
     hasLost = false;
+    stats: {
+        activeCellCount: number,
+        virusCellCount: number,
+    } = { activeCellCount: 0, virusCellCount: 0 };
 
     onUpdateCallback = () => {};
 
@@ -272,15 +276,20 @@ export class GameEngine {
 
             this.grid = tf.tensor(grid);
 
-            if (!this.detectGameEnd()) {
+            if (!this.detectGameStatus()) {
                 this.generation++;
             }
         });
     }
 
-    detectGameEnd(): boolean {
-        const activeCellsCount = this.activeCells.sum().arraySync();
-        const virusCellsCount = this.virusCells.sum().arraySync();
+    detectGameStatus(): boolean {
+        const activeCellsCount = this.activeCells.mul(this.grid).sum().arraySync() as number;
+        const virusCellsCount = this.virusCells.mul(this.grid).sum().arraySync() as number;
+
+        this.stats.activeCellCount = activeCellsCount;
+        this.stats.virusCellCount = virusCellsCount;
+
+        this.onUpdateCallback();
 
         if (virusCellsCount === 0) {
             this.hasWon = true;

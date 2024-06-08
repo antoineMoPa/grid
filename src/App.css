@@ -59,9 +59,13 @@ table {
     display: inline-block;
 }
 
-.surrender {
+.top-right-bar {
     position: absolute;
     top: 0;
     right: 0;
     margin: 1rem;
+
+    .stats {
+        margin-bottom: 1rem;
+    }
 }
