@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -e
+
 git switch dist
 rm -rf docs
 yarn run build
