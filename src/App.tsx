@@ -6,6 +6,7 @@ import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
 import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure} from "@nextui-org/react";
 
+const GAME_INTERVAL = 1000;
 
 tf.setBackend('webgl').then(() => {
     console.log('WebGL backend initialized');
@@ -21,6 +22,7 @@ class GameEngine {
     actionQueue: Array<Function> = [];
     generation = 0;
     hasWon = false;
+    hasLost = false;
 
     onUpdateCallback = () => {};
 
@@ -36,6 +38,7 @@ class GameEngine {
         this.actionQueue = [];
         this.generation = 0;
         this.hasWon = false;
+        this.hasLost = false;
 
         // initialize first activeCell
         const activeCells = this.activeCells.arraySync() as number[][];
@@ -131,7 +134,7 @@ class GameEngine {
         }
 
         // Check if there are enough resources in the initial cell to move to the new position
-        if (initialCellValue < moveCost) {
+        if (initialCellValue <= moveCost) {
             return false;
         }
 
@@ -143,6 +146,7 @@ class GameEngine {
         const initialContent = grid[s[0]][s[1]];
         grid[s[0]][s[1]] = 0;
         grid[d[0]][d[1]] += initialContent - moveCost;
+
         playerCells[d[0]][d[1]] = 1;
         enemyCells[d[0]][d[1]] = 0;
 
@@ -210,98 +214,108 @@ class GameEngine {
 
 
     onCellClick([i, j]: [number, number]) {
-        if (!this.checkBounds([i, j])) {
-            return;
-        }
-
         const activeCells = this.activeCells.arraySync() as number[][];
 
-        // Check if any neighbor cell is active
-        let hasActiveNeighbor = false;
-        if (i > 0 && activeCells[i - 1][j] === 1) {
-            hasActiveNeighbor = true;
+        if (activeCells[i][j] === 1) {
+            this.focusedCell = [i, j];
         }
-        if (i < (this.grid.shape[0] as number) - 1 && activeCells[i + 1][j] === 1) {
-            hasActiveNeighbor = true;
-        }
-        if (j > 0 && activeCells[i][j - 1] === 1) {
-            hasActiveNeighbor = true;
-        }
-        if (j < (this.grid.shape[1] as number) - 1 && activeCells[i][j + 1] === 1) {
-            hasActiveNeighbor = true;
-        }
-
-        if (!hasActiveNeighbor) {
-            return;
-        }
-
-        this.moveTo({
-            initialCellPosition: this.focusedCell,
-            destinationCellPosition: [i, j]
-        });
     }
 
     step() {
-        if (this.hasWon) {
-            return;
-        }
-
         // Process actions
         while (this.actionQueue.length > 0) {
             // Call action with this as context
             (this.actionQueue.shift() as () => void).call(this);
         }
 
-        const grid = structuredClone(this.grid.arraySync()) as number[][];
-        const activeCells = this.activeCells.arraySync() as number[][];
-        const virusCells = this.virusCells.arraySync() as number[][];
+        this.queueAction(() => {
+            if (this.hasWon) {
+                return;
+            }
 
 
-        for (let i = 0; i < (this.grid.shape[0] as number); i++) {
-            for (let j = 0; j < (this.grid.shape[1] as number); j++) {
-                if (activeCells[i][j] === 1 && this.generation % 5 === 0) {
-                    // Each cell increases by 1 if it is active
-                    grid[i][j]++;
-                } else if (virusCells[i][j] === 1) {
-                    grid[i][j]++;
+            const grid = structuredClone(this.grid.arraySync()) as number[][];
+            const activeCells = this.activeCells.arraySync() as number[][];
+            const virusCells = this.virusCells.arraySync() as number[][];
 
-                    if (this.generation % 5 === 0) {
-                        // Move virus in random direction
-                        const directions: [number, number][] = [
-                            [i - 1, j],
-                            [i + 1, j],
-                            [i, j - 1],
-                            [i, j + 1],
-                        ];
 
-                        const direction = directions[Math.floor(Math.random() * directions.length)];
-                        this.queueAction(() => {
-                            this.moveVirusTo({
-                                initialCellPosition: [i, j],
-                                destinationCellPosition: direction
+            for (let i = 0; i < (this.grid.shape[0] as number); i++) {
+                for (let j = 0; j < (this.grid.shape[1] as number); j++) {
+                    if (activeCells[i][j] === 1 && this.generation % 5 === 0) {
+                        // Each cell increases by 1 if it is active
+                        grid[i][j]++;
+                    } else if (virusCells[i][j] === 1) {
+                        grid[i][j]++;
+
+                        if (this.generation % 4 === 0) {
+                            // Move virus in random direction
+                            const directions: [number, number][] = [
+                                [i - 1, j],
+                                [i + 1, j],
+                                [i, j - 1],
+                                [i, j + 1],
+                            ];
+
+                            const direction = directions[Math.floor(Math.random() * directions.length)];
+                            this.queueAction(() => {
+                                this.moveVirusTo({
+                                    initialCellPosition: [i, j],
+                                    destinationCellPosition: direction
+                                });
                             });
-                        });
+                        }
                     }
                 }
             }
-        }
 
-        this.grid = tf.tensor(grid);
+            this.grid = tf.tensor(grid);
 
-        if (!this.detectWin()) {
-            this.generation++;
-        }
+            if (!this.detectGameEnd()) {
+                this.generation++;
+            }
+        });
     }
 
-    detectWin() {
+    detectGameEnd(): boolean {
+        const activeCellsCount = this.activeCells.sum().arraySync();
         const virusCellsCount = this.virusCells.sum().arraySync();
 
         if (virusCellsCount === 0) {
             this.hasWon = true;
             return true;
         }
+
+        if (activeCellsCount === 0) {
+            this.hasLost = true;
+            return true;
+        }
     }
 }
+
+const gameWinMessage = () => {
+    return (
+        <>
+            <ModalHeader className="flex flex-col gap-1">You Won!</ModalHeader>
+            <ModalBody>
+                <p>Congratulations!</p>
+                <p>You have successfully eradicated the virus from the grid.</p>
+            </ModalBody>
+        </>
+    );
+}
+
+const gameLostMessage = () => {
+    return (
+        <>
+            <ModalHeader className="flex flex-col gap-1">You Lost!</ModalHeader>
+            <ModalBody>
+                <p>Ouch!</p>
+                <p>The virus has taken over the grid.</p>
+            </ModalBody>
+        </>
+    );
+}
+
 
 function App() {
     const gameEngineRef = useRef<null | GameEngine>(null);
@@ -338,10 +352,10 @@ function App() {
             gameEngine.step();
             setGeneration(generation + 1);
 
-            if (gameEngine.hasWon) {
+            if (gameEngine.hasWon || gameEngine.hasLost) {
                 onOpen();
             }
-        }, 1000);
+        }, GAME_INTERVAL);
 
         return () => clearInterval(interval);
     }, [gameEngine, generation]);
@@ -385,11 +399,8 @@ function App() {
                     <ModalContent>
                         {(onClose) => (
                             <>
-                                <ModalHeader className="flex flex-col gap-1">You Won!</ModalHeader>
-                                <ModalBody>
-                                    <p>Congratulations!</p>
-                                    <p>You have successfully eradicated the virus from the grid.</p>
-                                </ModalBody>
+                                { gameEngine.hasWon && gameWinMessage() }
+                                { gameEngine.hasLost && gameLostMessage() }
                                 <ModalFooter>
                                     <Button color="primary" onPress={onClose}>
                                         Play Again
