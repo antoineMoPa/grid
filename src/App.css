@@ -38,6 +38,11 @@ table {
             background: #caa;
             color: #000;
         }
+
+        &.virus {
+            background: #f00;
+            color: #fff;
+        }
     }
 }
 

@@ -10,10 +10,11 @@ tf.setBackend('webgl').then(() => {
 });
 
 class GameEngine {
-    HEIGHT = 30;
+    HEIGHT = 25;
     WIDTH = 30;
     grid = tf.ones([this.HEIGHT, this.WIDTH]).mul(-1);
     activeCells = tf.zeros([this.HEIGHT, this.WIDTH]);
+    virusCells = tf.zeros([this.HEIGHT, this.WIDTH]);
     focusedCell: [number, number] = [0, 0];
     actionQueue: Array<Function> = [];
     generation = 0;
@@ -25,10 +26,13 @@ class GameEngine {
         // initialize first activeCell
         const activeCells = this.activeCells.arraySync() as number[][];
         const grid = this.grid.arraySync() as number[][];
+        const virusCells = this.virusCells.arraySync() as number[][];
         activeCells[this.focusedCell[0]][this.focusedCell[1]] = 1;
+        virusCells[this.HEIGHT -1][this.WIDTH - 1] = 1;
         grid[this.focusedCell[0]][this.focusedCell[1]] = 25;
         this.activeCells = tf.tensor(activeCells);
         this.grid = tf.tensor(grid);
+        this.virusCells = tf.tensor(virusCells);
     }
 
     bindEvents() {
@@ -36,25 +40,25 @@ class GameEngine {
             switch (e.key) {
                 case 'ArrowUp':
                     this.moveTo({
-                        initialCellPositon: this.focusedCell,
+                        initialCellPosition: this.focusedCell,
                         destinationCellPosition: [this.focusedCell[0] - 1, this.focusedCell[1]]
                     });
                     break;
                 case 'ArrowDown':
                     this.moveTo({
-                        initialCellPositon: this.focusedCell,
+                        initialCellPosition: this.focusedCell,
                         destinationCellPosition: [this.focusedCell[0] + 1, this.focusedCell[1]]
                     });
                     break;
                 case 'ArrowLeft':
                     this.moveTo({
-                        initialCellPositon: this.focusedCell,
+                        initialCellPosition: this.focusedCell,
                         destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] - 1]
                     });
                     break;
                 case 'ArrowRight':
                     this.moveTo({
-                        initialCellPositon: this.focusedCell,
+                        initialCellPosition: this.focusedCell,
                         destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] + 1]
                     });
                     break;
@@ -65,51 +69,131 @@ class GameEngine {
         });
     }
 
-    addAction(action: () => void) {
+    queueAction(action: () => void) {
         this.actionQueue.push(action);
     }
 
     checkBounds([i, j]: [number, number]) {
-        return i >= 0 && i < this.WIDTH && j >= 0 && j < this.HEIGHT;
+        return i >= 0 && i < this.HEIGHT && j >= 0 && j < this.WIDTH;
     }
 
-    moveTo(
-        {initialCellPositon, destinationCellPosition}:
-        {initialCellPositon: [number, number], destinationCellPosition: [number, number]}
-    ) {
-        const activeCells = this.activeCells.arraySync() as number[][];
-        const grid = this.grid.arraySync() as number[][];
 
-        if (!this.checkBounds(initialCellPositon) || !this.checkBounds(destinationCellPosition)) {
-            return;
+    moveToMeta(
+        {
+            initialCellPosition,
+            destinationCellPosition,
+            grid,
+            playerCells,
+            enemyCells
+        }:
+        {
+            initialCellPosition: [number, number],
+            destinationCellPosition: [number, number],
+            grid: number[][],
+            playerCells: number[][],
+            enemyCells: number[][]
+        }
+    ): boolean {
+        const d = destinationCellPosition;
+        const s = initialCellPosition;
+
+        if (!this.checkBounds(s) || !this.checkBounds(d)) {
+            return false;
         }
 
-        const initialCellValue = grid[initialCellPositon[0]][initialCellPositon[1]];
-        const destinationCellValue = grid[destinationCellPosition[0]][destinationCellPosition[1]];
+        const initialCellValue = grid[s[0]][s[1]];
+        let moveCost = 0;
+
+        // Check if the destination cell is a virus cell
+        if (enemyCells[d[0]][d[1]] === 1) {
+            moveCost = grid[d[0]][d[1]];
+        }
+        // Check if the destination cell is an active cell
+        else if (playerCells[d[0]][d[1]] === 1) {
+            moveCost = 0;
+        }
+        else {
+            moveCost = -grid[d[0]][d[1]];
+        }
 
         // Check if there are enough resources in the initial cell to move to the new position
-        if (initialCellValue < -destinationCellValue) {
-            return;
+        if (initialCellValue < moveCost) {
+            return false;
         }
 
-        if (activeCells[initialCellPositon[0]][initialCellPositon[1]] !==  1) {
-            return
+        if (playerCells[s[0]][s[1]] !==  1) {
+            return false;
         }
 
         // Move all content from the initial cell to the destination cell
-        const initialContent = grid[initialCellPositon[0]][initialCellPositon[1]];
-        grid[initialCellPositon[0]][initialCellPositon[1]] = 0;
-        grid[destinationCellPosition[0]][destinationCellPosition[1]] += initialContent;
-        activeCells[destinationCellPosition[0]][destinationCellPosition[1]] = 1;
+        const initialContent = grid[s[0]][s[1]];
+        grid[s[0]][s[1]] = 0;
+        grid[d[0]][d[1]] += initialContent - moveCost;
+        playerCells[d[0]][d[1]] = 1;
+        enemyCells[d[0]][d[1]] = 0;
 
-        this.activeCells = tf.tensor(activeCells);
+        this.onUpdateCallback();
+
+        return true;
+    }
+
+    moveTo(
+        {initialCellPosition, destinationCellPosition}:
+        {initialCellPosition: [number, number], destinationCellPosition: [number, number]}
+    ) {
+        const grid = this.grid.arraySync() as number[][];
+        const playerCells = this.activeCells.arraySync() as number[][];
+        const enemyCells = this.virusCells.arraySync() as number[][];
+
+        const result = this.moveToMeta({
+            initialCellPosition,
+            destinationCellPosition,
+            grid,
+            playerCells,
+            enemyCells
+        });
+
+        if (!result) {
+            return;
+        }
+
+        this.activeCells = tf.tensor(playerCells);
         this.grid = tf.tensor(grid);
+        this.virusCells = tf.tensor(enemyCells);
 
         // Move focused cell to the new position
         this.focusedCell = structuredClone(destinationCellPosition);
 
         this.onUpdateCallback();
     }
+
+    moveVirusTo(
+        {initialCellPosition, destinationCellPosition}:
+        {initialCellPosition: [number, number], destinationCellPosition: [number, number]}
+    ) {
+        const grid = this.grid.arraySync() as number[][];
+        const enemyCells = this.activeCells.arraySync() as number[][];
+        const playerCells = this.virusCells.arraySync() as number[][];
+
+        const result = this.moveToMeta({
+            initialCellPosition,
+            destinationCellPosition,
+            grid,
+            enemyCells,
+            playerCells
+        });
+
+        if (!result) {
+            return;
+        }
+
+        this.activeCells = tf.tensor(enemyCells);
+        this.grid = tf.tensor(grid);
+        this.virusCells = tf.tensor(playerCells);
+
+        this.onUpdateCallback();
+    }
+
 
     onCellClick([i, j]: [number, number]) {
         if (!this.checkBounds([i, j])) {
@@ -138,7 +222,7 @@ class GameEngine {
         }
 
         this.moveTo({
-            initialCellPositon: this.focusedCell,
+            initialCellPosition: this.focusedCell,
             destinationCellPosition: [i, j]
         });
     }
@@ -148,25 +232,41 @@ class GameEngine {
             return;
         }
 
-        const grid = structuredClone(this.grid.arraySync()) as number[][];
-        const activeCells = this.activeCells.arraySync() as number[][];
-
         // Process actions
         while (this.actionQueue.length > 0) {
             // Call action with this as context
             (this.actionQueue.shift() as () => void).call(this);
         }
 
-        if (this.generation % 5 === 0) {
-            // Each cell increases by 1 if it is active
-            for (let i = 0; i < (this.grid.shape[0] as number); i++) {
-                for (let j = 0; j < (this.grid.shape[1] as number); j++) {
-                    if (activeCells[i][j] === 1) {
-                        grid[i][j]++;
-                    } else if (this.generation % 40 === 0 && this.generation > 0){
-                        // Increase difficulty with time by
-                        // increasing the value of inactive cells
-                        grid[i][j]--;
+        const grid = structuredClone(this.grid.arraySync()) as number[][];
+        const activeCells = this.activeCells.arraySync() as number[][];
+        const virusCells = this.virusCells.arraySync() as number[][];
+
+
+        for (let i = 0; i < (this.grid.shape[0] as number); i++) {
+            for (let j = 0; j < (this.grid.shape[1] as number); j++) {
+                if (activeCells[i][j] === 1 && this.generation % 5 === 0) {
+                    // Each cell increases by 1 if it is active
+                    grid[i][j]++;
+                } else if (virusCells[i][j] === 1) {
+                    grid[i][j]++;
+
+                    if (this.generation % 5 === 0) {
+                        // Move virus in random direction
+                        const directions: [number, number][] = [
+                            [i - 1, j],
+                            [i + 1, j],
+                            [i, j - 1],
+                            [i, j + 1],
+                        ];
+
+                        const direction = directions[Math.floor(Math.random() * directions.length)];
+                        this.queueAction(() => {
+                            this.moveVirusTo({
+                                initialCellPosition: [i, j],
+                                destinationCellPosition: direction
+                            });
+                        });
                     }
                 }
             }
@@ -180,23 +280,12 @@ class GameEngine {
     }
 
     detectWin() {
-        const activeCells = this.activeCells.arraySync() as number[][];
-        let win = true;
-        for (let i = 0; i < (this.grid.shape[0] as number); i++) {
-            for (let j = 0; j < (this.grid.shape[1] as number); j++) {
-                if (activeCells[i][j] !== 1) {
-                    win = false;
-                    break;
-                }
-            }
-        }
+        const virusCellsCount = this.virusCells.sum().arraySync();
 
-        if (win) {
+        if (virusCellsCount === 0) {
             this.hasWon = true;
-            alert('You win!');
+            return true;
         }
-
-        return win;
     }
 }
 
@@ -219,8 +308,9 @@ function App() {
     // Loop through the grid show a table cell for each cell
     const rows = [];
 
-    const currentGrid = gameEngine.grid.arraySync() as number[][];
-    const currentActiveCells = gameEngine.activeCells.arraySync() as number[][];
+    const grid = gameEngine.grid.arraySync() as number[][];
+    const activeCells = gameEngine.activeCells.arraySync() as number[][];
+    const virusCells = gameEngine.virusCells.arraySync() as number[][];
 
     const onCellClick = ([i, j]: [number, number]) => {
         gameEngine.onCellClick([i, j]);
@@ -244,12 +334,13 @@ function App() {
                 <td
                     key={j}
                     className={classNames({
-                        active: currentActiveCells[i][j] === 1,
-                        focused: gameEngine.focusedCell[0] === i && gameEngine.focusedCell[1] === j
+                        active: activeCells[i][j] === 1,
+                        focused: gameEngine.focusedCell[0] === i && gameEngine.focusedCell[1] === j,
+                        virus: virusCells[i][j] === 1,
                     })}
                     onClick={() => onCellClick([i, j])}
                 >
-                    {currentGrid[i][j]}
+                    {grid[i][j]}
                 </td>
             )
         }
