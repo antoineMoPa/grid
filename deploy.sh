@@ -2,9 +2,9 @@
 
 set -e
 
+yarn run build
 git switch dist
 rm -rf docs
-yarn run build
 mv dist docs
 git add docs
 git commit -m "Deploy"
