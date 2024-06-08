@@ -4,7 +4,7 @@ tf.setBackend('webgl').then(() => {
     console.log('WebGL backend initialized');
 });
 
-const VIRUS_MOVE_RATE = 0.2;
+const DEFAULT_VIRUS_MOVE_RATE = 0.2;
 
 export class GameEngine {
     HEIGHT = 25;
@@ -17,6 +17,7 @@ export class GameEngine {
     generation = 0;
     hasWon = false;
     hasLost = false;
+    virusMoveRate = DEFAULT_VIRUS_MOVE_RATE;
     stats: {
         activeCellCount: number,
         virusCellCount: number,
@@ -38,6 +39,7 @@ export class GameEngine {
         this.generation = 0;
         this.hasWon = false;
         this.hasLost = false;
+        this.virusMoveRate = DEFAULT_VIRUS_MOVE_RATE;
 
         // initialize first activeCell
         const activeCells = this.activeCells.arraySync() as number[][];
@@ -253,7 +255,7 @@ export class GameEngine {
                     } else if (virusCells[i][j] === 1) {
                         grid[i][j]++;
 
-                        if (Math.random() < VIRUS_MOVE_RATE) {
+                        if (Math.random() < this.virusMoveRate) {
                             // Move virus in random direction
                             const directions: [number, number][] = [
                                 [i - 1, j],

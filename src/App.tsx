@@ -36,6 +36,7 @@ const gameLostMessage = () => {
 function App() {
     const gameEngineRef = useRef<null | GameEngine>(null);
     const {isOpen, onOpen, onOpenChange} = useDisclosure();
+    const gameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     if (!gameEngineRef.current) {
         gameEngineRef.current = new GameEngine();
@@ -62,19 +63,25 @@ function App() {
         gameEngine.onCellClick([i, j]);
     };
 
-    // Every second, increase active cells
-    useEffect(() => {
-        const interval = setInterval(() => {
+    const replaceGameInterval = (delay: number) => {
+        if (gameIntervalRef.current) {
+            clearInterval(gameIntervalRef.current);
+        }
+        gameIntervalRef.current = setInterval(() => {
             gameEngine.step();
             setGeneration(generation + 1);
 
             if (gameEngine.hasWon || gameEngine.hasLost) {
                 onOpen();
             }
-        }, GAME_INTERVAL);
+        }, delay);
+    }
 
-        return () => clearInterval(interval);
-    }, [gameEngine, generation]);
+    // Every second, increase active cells
+    useEffect(() => {
+        replaceGameInterval(GAME_INTERVAL);
+        return () => clearInterval(gameIntervalRef.current);
+    }, [gameEngineRef.current]);
 
     for (let i = 0; i < (gameEngine.grid.shape[0] as number); i++) {
         const cells = [];
@@ -99,11 +106,13 @@ function App() {
     }
 
     const onClose = useCallback(() => {
+        replaceGameInterval(GAME_INTERVAL);
         gameEngineRef.current?.resetGame();
     }, []);
 
     const surrender = useCallback(() => {
-        gameEngineRef.current?.resetGame();
+        gameEngineRef.current.virusMoveRate = 1.0;
+        replaceGameInterval(10);
     }, []);
 
     return (
@@ -124,7 +133,7 @@ function App() {
                 <p>Eradicate the virus to win!</p>
             </div>
             <div className="bottom-right-bar">
-                <Button className="surrender" onClick={surrender}>Start Over</Button>
+                <Button className="surrender" onClick={surrender}>Surrender</Button>
             </div>
             <table>
                 <tbody>
