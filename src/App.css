@@ -41,8 +41,8 @@ table {
         }
 
         &.focused {
-            background: #caa;
-            color: #000;
+            background: #3300ff;
+            color: #fff;
         }
 
         &.virus {
