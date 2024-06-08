@@ -80,7 +80,12 @@ function App() {
     // Every second, increase active cells
     useEffect(() => {
         replaceGameInterval(GAME_INTERVAL);
-        return () => clearInterval(gameIntervalRef.current);
+
+        return () => {
+            if (gameIntervalRef.current) {
+                clearInterval(gameIntervalRef.current)
+            }
+        };
     }, [gameEngineRef.current]);
 
     for (let i = 0; i < (gameEngine.grid.shape[0] as number); i++) {
@@ -111,7 +116,9 @@ function App() {
     }, []);
 
     const surrender = useCallback(() => {
-        gameEngineRef.current.virusMoveRate = 1.0;
+        if (gameEngineRef.current) {
+            gameEngineRef.current.virusMoveRate = 1.0;
+        }
         replaceGameInterval(10);
     }, []);
 
