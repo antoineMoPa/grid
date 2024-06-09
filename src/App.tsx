@@ -6,6 +6,7 @@ import { GameEngine, EASY, MEDIUM, HARD, Difficulty } from './GameEngine'
 import '@tensorflow/tfjs-backend-webgl';
 import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure} from "@nextui-org/react";
 
+import { useCookies } from 'react-cookie';
 
 const GAME_INTERVAL = 1000;
 
@@ -54,7 +55,8 @@ function App() {
     const gameEngineRef = useRef<null | GameEngine>(null);
     const {isOpen, onOpen, onOpenChange} = useDisclosure();
     const gameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const [difficulty, setDifficulty] = useState<Difficulty>(EASY);
+    const [cookies, setCookie] = useCookies(['difficulty']);
+    const [difficulty, setDifficulty] = useState<Difficulty>(cookies.difficulty || EASY);
 
     if (!gameEngineRef.current) {
         gameEngineRef.current = new GameEngine();
@@ -144,6 +146,7 @@ function App() {
         gameEngine.difficulty = difficulty;
         gameEngine.resetGame();
         document.querySelectorAll('table')[0].focus();
+        setCookie('difficulty', difficulty);
     }, [difficulty, gameEngine, tableRef]);
 
     return (
