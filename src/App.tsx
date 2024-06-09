@@ -1,20 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 import classNames from 'classnames'
-import { GameEngine } from './GameEngine'
+import { GameEngine, EASY, MEDIUM, HARD } from './GameEngine'
 
 import '@tensorflow/tfjs-backend-webgl';
 import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure} from "@nextui-org/react";
 
+
 const GAME_INTERVAL = 1000;
 
-const gameWinMessage = () => {
+const gameWinMessage = (generations: number, level) => {
     return (
         <>
             <ModalHeader className="flex flex-col gap-1">You Won!</ModalHeader>
             <ModalBody>
                 <p>Congratulations!</p>
-                <p>You have successfully eradicated the virus from the grid.</p>
+                <p>You have successfully eradicated the virus from the grid
+                    in {generations} generations.</p>
+                <p>level: {level}</p>
             </ModalBody>
         </>
     );
@@ -32,11 +35,26 @@ const gameLostMessage = () => {
     );
 }
 
+const difficultyToString = (difficulty: string) => {
+    switch (difficulty) {
+        case EASY:
+            return 'Easy';
+        case MEDIUM:
+            return 'Medium';
+        case HARD:
+            return 'Hard';
+        default:
+            return 'Unknown';
+    }
+}
+
 
 function App() {
+    const tableRef = useRef<HTMLTableElement | null>(null);
     const gameEngineRef = useRef<null | GameEngine>(null);
     const {isOpen, onOpen, onOpenChange} = useDisclosure();
     const gameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const [difficulty, setDifficulty] = useState(EASY);
 
     if (!gameEngineRef.current) {
         gameEngineRef.current = new GameEngine();
@@ -122,6 +140,12 @@ function App() {
         replaceGameInterval(10);
     }, []);
 
+    useEffect(() => {
+        gameEngine.difficulty = difficulty;
+        gameEngine.resetGame();
+        document.querySelectorAll('table')[0].focus();
+    }, [difficulty, gameEngine, tableRef]);
+
     return (
         <>
             <div className="top-left-bar">
@@ -133,6 +157,21 @@ function App() {
                             Click one of your other cells to continue.
                         </p>
                 }
+                <div className="difficulty mt-4">
+                    <p className="mb-2">Difficulty:</p>
+                    <Button onClick={() => setDifficulty(EASY)}
+                        className={classNames("mr-1", { selected: difficulty == EASY })}>
+                        {difficultyToString(EASY)}
+                    </Button>
+                    <Button onClick={() => setDifficulty(MEDIUM)}
+                        className={classNames("mr-1", { selected: difficulty == MEDIUM })}>
+                        {difficultyToString(MEDIUM)}
+                    </Button>
+                    <Button onClick={() => setDifficulty(HARD)}
+                        className={classNames({ selected: difficulty == HARD })}>
+                        {difficultyToString(HARD)}
+                    </Button>
+                </div>
             </div>
             <div className="top-right-bar">
                 <div className="stats">
@@ -151,7 +190,7 @@ function App() {
             <div className="bottom-right-bar">
                 <Button className="surrender" onClick={surrender}>Surrender</Button>
             </div>
-            <table>
+            <table ref={tableRef}>
                 <tbody>
                     {rows}
                 </tbody>
@@ -161,7 +200,10 @@ function App() {
                     <ModalContent>
                         {(onClose) => (
                             <>
-                                { gameEngine.hasWon && gameWinMessage() }
+                                { gameEngine.hasWon && gameWinMessage(
+                                    gameEngine.generation,
+                                    difficultyToString(difficulty)
+                                ) }
                                 { gameEngine.hasLost && gameLostMessage() }
                                 <ModalFooter>
                                     <Button color="primary" onPress={onClose}>

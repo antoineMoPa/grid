@@ -53,6 +53,17 @@ table {
     }
 }
 
+.difficulty {
+    button[data-focus-visible=true] {
+        outline: none;
+        border: none;
+        box-shadow: none;
+    }
+    .selected {
+        background: #555;
+    }
+}
+
 .top-left-bar {
     position: absolute;
     top: 0;

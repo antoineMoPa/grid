@@ -6,7 +6,27 @@ tf.setBackend('webgl').then(() => {
 
 const DEFAULT_VIRUS_MOVE_RATE = 0.2;
 
+export const EASY = "level-0";
+export const MEDIUM = "level-1";
+export const HARD = "level-2";
+
+const difficultyMap = {
+    [EASY]: {
+        initialIslands: 5,
+        initialSteps: 0,
+    },
+    [MEDIUM]: {
+        initialIslands: 4,
+        initialSteps: 5,
+    },
+    [HARD]: {
+        initialIslands: 2,
+        initialSteps: 12,
+    }
+}
+
 export class GameEngine {
+    difficulty = EASY;
     HEIGHT = 25;
     WIDTH = 30;
     grid = tf.ones([this.HEIGHT, this.WIDTH]);
@@ -48,7 +68,8 @@ export class GameEngine {
 
         // initialize a few virus cells
         const virusCells = this.virusCells.arraySync() as number[][];
-        for (let i = 0; i < 4; i++) {
+
+        for (let i = 0; i < difficultyMap[this.difficulty].initialIslands; i++) {
             const virusCell = [Math.floor(Math.random() * this.HEIGHT), Math.floor(Math.random() * this.WIDTH)];
             virusCells[virusCell[0]][virusCell[1]] = 1;
             grid[virusCell[0]][virusCell[1]] = 1;
@@ -61,9 +82,11 @@ export class GameEngine {
         this.virusCells = tf.tensor(virusCells);
 
         // Step a few times to grow virus
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < difficultyMap[this.difficulty].initialSteps; i++) {
             this.step();
         }
+
+        this.generation = 0;
     }
 
     bindEvents() {
