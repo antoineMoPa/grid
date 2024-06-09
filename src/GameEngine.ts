@@ -48,7 +48,7 @@ export class GameEngine {
 
         // initialize a few virus cells
         const virusCells = this.virusCells.arraySync() as number[][];
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 4; i++) {
             const virusCell = [Math.floor(Math.random() * this.HEIGHT), Math.floor(Math.random() * this.WIDTH)];
             virusCells[virusCell[0]][virusCell[1]] = 1;
             grid[virusCell[0]][virusCell[1]] = 1;
@@ -59,6 +59,11 @@ export class GameEngine {
         this.activeCells = tf.tensor(activeCells);
         this.grid = tf.tensor(grid);
         this.virusCells = tf.tensor(virusCells);
+
+        // Step a few times to grow virus
+        for (let i = 0; i < 5; i++) {
+            this.step();
+        }
     }
 
     bindEvents() {
