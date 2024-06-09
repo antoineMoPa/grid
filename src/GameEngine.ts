@@ -10,6 +10,8 @@ export const EASY = "level-0";
 export const MEDIUM = "level-1";
 export const HARD = "level-2";
 
+export type Difficulty = typeof EASY | typeof MEDIUM | typeof HARD;
+
 const difficultyMap = {
     [EASY]: {
         initialIslands: 5,
@@ -25,8 +27,9 @@ const difficultyMap = {
     }
 }
 
+
 export class GameEngine {
-    difficulty = EASY;
+    difficulty: Difficulty = EASY;
     HEIGHT = 25;
     WIDTH = 30;
     grid = tf.ones([this.HEIGHT, this.WIDTH]);

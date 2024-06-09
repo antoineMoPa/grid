@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 import classNames from 'classnames'
-import { GameEngine, EASY, MEDIUM, HARD } from './GameEngine'
+import { GameEngine, EASY, MEDIUM, HARD, Difficulty } from './GameEngine'
 
 import '@tensorflow/tfjs-backend-webgl';
 import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure} from "@nextui-org/react";
@@ -9,7 +9,7 @@ import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDis
 
 const GAME_INTERVAL = 1000;
 
-const gameWinMessage = (generations: number, level) => {
+const gameWinMessage = (generations: number, level: string) => {
     return (
         <>
             <ModalHeader className="flex flex-col gap-1">You Won!</ModalHeader>
@@ -54,7 +54,7 @@ function App() {
     const gameEngineRef = useRef<null | GameEngine>(null);
     const {isOpen, onOpen, onOpenChange} = useDisclosure();
     const gameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const [difficulty, setDifficulty] = useState(EASY);
+    const [difficulty, setDifficulty] = useState<Difficulty>(EASY);
 
     if (!gameEngineRef.current) {
         gameEngineRef.current = new GameEngine();
