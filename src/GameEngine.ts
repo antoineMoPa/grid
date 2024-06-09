@@ -103,24 +103,32 @@ export class GameEngine {
     bindEvents() {
         window.addEventListener('keydown', (e) => {
             switch (e.key) {
+                case 'w':
+                case 'W':
                 case 'ArrowUp':
                     this.moveTo({
                         initialCellPosition: this.focusedCell,
                         destinationCellPosition: [this.focusedCell[0] - 1, this.focusedCell[1]]
                     });
                     break;
+                case 's':
+                case 'S':
                 case 'ArrowDown':
                     this.moveTo({
                         initialCellPosition: this.focusedCell,
                         destinationCellPosition: [this.focusedCell[0] + 1, this.focusedCell[1]]
                     });
                     break;
+                case 'a':
+                case 'A':
                 case 'ArrowLeft':
                     this.moveTo({
                         initialCellPosition: this.focusedCell,
                         destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] - 1]
                     });
                     break;
+                case 'd':
+                case 'D':
                 case 'ArrowRight':
                     this.moveTo({
                         initialCellPosition: this.focusedCell,
