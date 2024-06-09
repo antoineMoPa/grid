@@ -189,6 +189,12 @@ function App() {
                 <p>Collect numbers and use these to fight the virus.</p>
                 <br/>
                 <p>Eradicate the virus to win!</p>
+                <br/>
+                <p className="text-xs">Like the repo on Github:<br/>
+                    <a href="https://github.com/antoineMoPa/grid" target="_blank">
+                        https://github.com/antoineMoPa/grid
+                    </a>
+                </p>
             </div>
             <div className="bottom-right-bar">
                 <Button className="surrender" onClick={surrender}>Surrender</Button>
