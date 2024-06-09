@@ -16,14 +16,17 @@ const difficultyMap = {
     [EASY]: {
         initialIslands: 5,
         initialSteps: 0,
+        minInitialVirusArea: 0,
     },
     [MEDIUM]: {
         initialIslands: 4,
         initialSteps: 5,
+        minInitialVirusArea: 0,
     },
     [HARD]: {
         initialIslands: 2,
         initialSteps: 12,
+        minInitialVirusArea: 50,
     }
 }
 
@@ -85,7 +88,12 @@ export class GameEngine {
         this.virusCells = tf.tensor(virusCells);
 
         // Step a few times to grow virus
-        for (let i = 0; i < difficultyMap[this.difficulty].initialSteps; i++) {
+        const level = difficultyMap[this.difficulty];
+        for (let i = 0; i < level.initialSteps; i++) {
+            this.step();
+        }
+
+        while (this.stats.virusCellCount < level.minInitialVirusArea) {
             this.step();
         }
 
