@@ -110,3 +110,16 @@ table {
         font-weight: 600;
     }
 }
+
+.keyboard-shortcut {
+    display: inline-block;
+    margin: 0.5rem;
+    padding: 0.4rem 0.4rem;
+    background: #eee;
+    border-radius: 3px;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+    color: #333;
+    font-size: 0.8rem;
+    line-height: 0.8rem;
+    opacity: 0.5;
+}

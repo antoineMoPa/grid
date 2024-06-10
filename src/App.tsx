@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { GameEngine, EASY, MEDIUM, HARD, Difficulty } from './GameEngine'
 
 import '@tensorflow/tfjs-backend-webgl';
-import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure} from "@nextui-org/react";
+import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Switch, Input} from "@nextui-org/react";
 
 import { useCookies } from 'react-cookie';
 
@@ -57,6 +57,8 @@ function App() {
     const gameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [cookies, setCookie] = useCookies(['difficulty']);
     const [difficulty, setDifficulty] = useState<Difficulty>(cookies.difficulty || EASY);
+    // Game engine has the source of truth for leave trail, this var is just for faster ui update
+    const [leaveTrail, setLeaveTrail] = useState(false);
 
     if (!gameEngineRef.current) {
         gameEngineRef.current = new GameEngine();
@@ -96,6 +98,10 @@ function App() {
             }
         }, delay);
     }
+
+    useEffect(() => {
+        setLeaveTrail(gameEngine.leaveTrail);
+    }, [gameEngineRef.current.leaveTrail]);
 
     // Every second, increase active cells
     useEffect(() => {
@@ -149,6 +155,15 @@ function App() {
         setCookie('difficulty', difficulty);
     }, [difficulty, gameEngine, tableRef]);
 
+    const handleLeaveTrailChange = useCallback((value: boolean) => {
+        gameEngine.leaveTrail = value;
+        setLeaveTrail(value);
+    }, [gameEngine]);
+
+    const handleTrailSizeChange = useCallback((value: string) => {
+        gameEngine.trailSize = parseInt(value);
+    }, [gameEngine]);
+
     return (
         <>
             <div className="top-left-bar">
@@ -174,6 +189,19 @@ function App() {
                         className={classNames({ selected: difficulty == HARD })}>
                         {difficultyToString(HARD)}
                     </Button>
+                </div>
+                <div className="leave-trail mt-4">
+                    <Switch isSelected={leaveTrail} onValueChange={handleLeaveTrailChange}>
+                        Trail Wall Mode <span className="keyboard-shortcut">t</span>
+                        <br/>
+                    </Switch>
+                    { (leaveTrail) &&
+                        <div>
+                            <p>Tail size:</p>
+                            <Input type="number" defaultValue={gameEngine.trailSize.toString()} onValueChange={handleTrailSizeChange} />
+                        </div>
+                    }
+                    <p className="text-xs text-slate-500">Leave trail when around virus to help slow growth.</p>
                 </div>
             </div>
             <div className="top-right-bar">

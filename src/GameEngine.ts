@@ -44,6 +44,9 @@ export class GameEngine {
     hasWon = false;
     hasLost = false;
     virusMoveRate = DEFAULT_VIRUS_MOVE_RATE;
+    leaveTrail = false;
+    trailSize = 5;
+
     stats: {
         activeCellCount: number,
         virusCellCount: number,
@@ -135,6 +138,10 @@ export class GameEngine {
                         destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] + 1]
                     });
                     break;
+                case 't':
+                case 'T':
+                     this.leaveTrail = !this.leaveTrail;
+                     break;
             default:
                 return;
             }
@@ -157,16 +164,19 @@ export class GameEngine {
             destinationCellPosition,
             grid,
             playerCells,
-            enemyCells
+            enemyCells,
+            trailSize,
         }:
         {
             initialCellPosition: [number, number],
             destinationCellPosition: [number, number],
             grid: number[][],
             playerCells: number[][],
-            enemyCells: number[][]
+            enemyCells: number[][],
+            trailSize?: number,
         }
     ): boolean {
+        trailSize = trailSize || 0;
         const d = destinationCellPosition;
         const s = initialCellPosition;
 
@@ -202,6 +212,27 @@ export class GameEngine {
         grid[s[0]][s[1]] = 0;
         grid[d[0]][d[1]] = initialCellValue - moveCost;
 
+        // Leave Trail logic
+        {
+            // Check if there is an enemy cell around
+            let enemyAround = false;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (this.checkBounds([s[0] + i, s[1] + j]) && enemyCells[s[0] + i][s[1] + j] === 1) {
+                        enemyAround = true;
+                    }
+                }
+            }
+
+            if (enemyAround) {
+                const amountToAdd = this.leaveTrail ? trailSize - grid[s[0]][s[1]] : 0;
+                if (trailSize > 0 && grid[d[0]][d[1]] > trailSize && amountToAdd > 0) {
+                    grid[s[0]][s[1]] = amountToAdd;
+                    grid[d[0]][d[1]] -= amountToAdd;
+                }
+            }
+        }
+
         playerCells[d[0]][d[1]] = 1;
         enemyCells[d[0]][d[1]] = 0;
 
@@ -223,7 +254,8 @@ export class GameEngine {
             destinationCellPosition,
             grid,
             playerCells,
-            enemyCells
+            enemyCells,
+            trailSize: this.trailSize
         });
 
         if (!result) {
