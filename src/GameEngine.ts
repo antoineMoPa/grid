@@ -138,10 +138,6 @@ export class GameEngine {
                         destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] + 1]
                     });
                     break;
-                case 't':
-                case 'T':
-                     this.leaveTrail = !this.leaveTrail;
-                     break;
             default:
                 return;
             }

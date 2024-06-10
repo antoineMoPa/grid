@@ -99,10 +99,6 @@ function App() {
         }, delay);
     }
 
-    useEffect(() => {
-        setLeaveTrail(gameEngine.leaveTrail);
-    }, [gameEngineRef.current.leaveTrail]);
-
     // Every second, increase active cells
     useEffect(() => {
         replaceGameInterval(GAME_INTERVAL);
@@ -159,6 +155,19 @@ function App() {
         gameEngine.leaveTrail = value;
         setLeaveTrail(value);
     }, [gameEngine]);
+
+    // Listen to 't' key to toggle trail mode
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key.toLowerCase() === 't') {
+                handleLeaveTrailChange(!leaveTrail);
+            }
+        }
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        }
+    }, [leaveTrail, handleLeaveTrailChange]);
 
     const handleTrailSizeChange = useCallback((value: string) => {
         gameEngine.trailSize = parseInt(value);
