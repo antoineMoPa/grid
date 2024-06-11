@@ -31,7 +31,7 @@ const difficultyMap = {
 }
 
 // Keyboard listener with standard repeat delay across devices
-const keyListener = (keys: string[], callback: () => void, repeat_delay = 28, timeout_delay = 100) => {
+const keyListener = (keys: string[], callback: (event: KeyboardEvent) => void, repeat_delay = 28, timeout_delay = 100) => {
     let interval: ReturnType<typeof setInterval>;
     let timeout: ReturnType<typeof setTimeout>;
     let repeat = false;
@@ -39,10 +39,10 @@ const keyListener = (keys: string[], callback: () => void, repeat_delay = 28, ti
     window.addEventListener('keydown', (e) => {
         if (keys.includes(e.key) && !repeat) {
             e.preventDefault();
-            callback();
+            callback(e);
             repeat = true;
             timeout = setTimeout(() => {
-                interval = setInterval(callback, repeat_delay);
+                interval = setInterval(callback.bind(this, e), repeat_delay);
             }, timeout_delay);
         }
     });
@@ -129,32 +129,48 @@ export class GameEngine {
     }
 
     bindEvents() {
-        keyListener(['w', 'W', 'ArrowUp'], () => {
-            this.moveTo({
-                initialCellPosition: this.focusedCell,
-                destinationCellPosition: [this.focusedCell[0] - 1, this.focusedCell[1]]
-            });
+        keyListener(['w', 'W', 'ArrowUp'], (e) => {
+            if (e.shiftKey) {
+                this.autoSweep([-1, 0])
+            } else {
+                this.moveTo({
+                    initialCellPosition: this.focusedCell,
+                    destinationCellPosition: [this.focusedCell[0] - 1, this.focusedCell[1]]
+                });
+            }
         });
 
-        keyListener(['s', 'S', 'ArrowDown'], () => {
-            this.moveTo({
-                initialCellPosition: this.focusedCell,
-                destinationCellPosition: [this.focusedCell[0] + 1, this.focusedCell[1]]
-            });
+        keyListener(['s', 'S', 'ArrowDown'], (e) => {
+            if (e.shiftKey) {
+                this.autoSweep([1, 0])
+            } else {
+                this.moveTo({
+                    initialCellPosition: this.focusedCell,
+                    destinationCellPosition: [this.focusedCell[0] + 1, this.focusedCell[1]]
+                });
+            }
         });
 
-        keyListener(['a', 'A', 'ArrowLeft'], () => {
-            this.moveTo({
-                initialCellPosition: this.focusedCell,
-                destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] - 1]
-            });
+        keyListener(['a', 'A', 'ArrowLeft'], (e) => {
+            if (e.shiftKey) {
+                this.autoSweep([0, -1])
+            } else {
+                this.moveTo({
+                    initialCellPosition: this.focusedCell,
+                    destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] - 1]
+                });
+            }
         });
 
-        keyListener(['d', 'D', 'ArrowRight'], () => {
-            this.moveTo({
-                initialCellPosition: this.focusedCell,
-                destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] + 1]
-            });
+        keyListener(['d', 'D', 'ArrowRight'], (e) => {
+            if (e.shiftKey) {
+                this.autoSweep([0, 1])
+            } else {
+                this.moveTo({
+                    initialCellPosition: this.focusedCell,
+                    destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] + 1]
+                });
+            }
         });
     }
 
@@ -166,6 +182,27 @@ export class GameEngine {
         return i >= 0 && i < this.HEIGHT && j >= 0 && j < this.WIDTH;
     }
 
+    autoSweep(direction: [number, number]) {
+        let i = this.focusedCell[0];
+        let j = this.focusedCell[1];
+        let delay = 0;
+        while (this.checkBounds([i, j])) {
+            const localI = i;
+            const localJ = j;
+
+            setTimeout(() => {
+                this.moveTo({
+                    initialCellPosition: [localI, localJ],
+                    destinationCellPosition: [localI + direction[0], localJ + direction[1]]
+                });
+            }, delay);
+
+            i += direction[0];
+            j += direction[1];
+
+            delay += 30;
+        }
+    }
 
     moveToMeta(
         {
@@ -190,6 +227,14 @@ export class GameEngine {
         const s = initialCellPosition;
 
         if (!this.checkBounds(s) || !this.checkBounds(d)) {
+            return false;
+        }
+
+        // Check if initial and final position are either left/right or up/down
+        if (s[0] !== d[0] && s[1] !== d[1]) {
+            return false;
+        }
+        if (Math.abs(s[0] - d[0]) > 1 || Math.abs(s[1] - d[1]) > 1) {
             return false;
         }
 
