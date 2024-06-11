@@ -30,6 +30,31 @@ const difficultyMap = {
     }
 }
 
+// Keyboard listener with standard repeat delay across devices
+const keyListener = (keys: string[], callback: () => void, repeat_delay = 28, timeout_delay = 100) => {
+    let interval: ReturnType<typeof setInterval>;
+    let timeout: ReturnType<typeof setTimeout>;
+    let repeat = false;
+
+    window.addEventListener('keydown', (e) => {
+        if (keys.includes(e.key) && !repeat) {
+            e.preventDefault();
+            callback();
+            repeat = true;
+            timeout = setTimeout(() => {
+                interval = setInterval(callback, repeat_delay);
+            }, timeout_delay);
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (keys.includes(e.key)) {
+            repeat = false;
+            clearInterval(interval);
+            clearTimeout(timeout);
+        }
+    });
+}
 
 export class GameEngine {
     difficulty: Difficulty = EASY;
@@ -104,44 +129,32 @@ export class GameEngine {
     }
 
     bindEvents() {
-        window.addEventListener('keydown', (e) => {
-            switch (e.key) {
-                case 'w':
-                case 'W':
-                case 'ArrowUp':
-                    this.moveTo({
-                        initialCellPosition: this.focusedCell,
-                        destinationCellPosition: [this.focusedCell[0] - 1, this.focusedCell[1]]
-                    });
-                    break;
-                case 's':
-                case 'S':
-                case 'ArrowDown':
-                    this.moveTo({
-                        initialCellPosition: this.focusedCell,
-                        destinationCellPosition: [this.focusedCell[0] + 1, this.focusedCell[1]]
-                    });
-                    break;
-                case 'a':
-                case 'A':
-                case 'ArrowLeft':
-                    this.moveTo({
-                        initialCellPosition: this.focusedCell,
-                        destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] - 1]
-                    });
-                    break;
-                case 'd':
-                case 'D':
-                case 'ArrowRight':
-                    this.moveTo({
-                        initialCellPosition: this.focusedCell,
-                        destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] + 1]
-                    });
-                    break;
-            default:
-                return;
-            }
-            e.preventDefault();
+        keyListener(['w', 'W', 'ArrowUp'], () => {
+            this.moveTo({
+                initialCellPosition: this.focusedCell,
+                destinationCellPosition: [this.focusedCell[0] - 1, this.focusedCell[1]]
+            });
+        });
+
+        keyListener(['s', 'S', 'ArrowDown'], () => {
+            this.moveTo({
+                initialCellPosition: this.focusedCell,
+                destinationCellPosition: [this.focusedCell[0] + 1, this.focusedCell[1]]
+            });
+        });
+
+        keyListener(['a', 'A', 'ArrowLeft'], () => {
+            this.moveTo({
+                initialCellPosition: this.focusedCell,
+                destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] - 1]
+            });
+        });
+
+        keyListener(['d', 'D', 'ArrowRight'], () => {
+            this.moveTo({
+                initialCellPosition: this.focusedCell,
+                destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] + 1]
+            });
         });
     }
 
