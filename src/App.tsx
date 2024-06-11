@@ -110,6 +110,14 @@ function App() {
         };
     }, [gameEngineRef.current]);
 
+    const formatNumber = (num: number) => {
+        // Above 999, use K notation
+        if (num > 999) {
+            return (num / 1000).toFixed(0) + 'K';
+        }
+        return num;
+    }
+
     for (let i = 0; i < (gameEngine.grid.shape[0] as number); i++) {
         const cells = [];
         for (let j = 0; j < (gameEngine.grid.shape[1] as number); j++) {
@@ -124,8 +132,8 @@ function App() {
                     })}
                     onClick={() => onCellClick([i, j])}
                 >
-                    {virusCells[i][j] === 1 && grid[i][j]}
-                    {activeCells[i][j] === 1 && grid[i][j]}
+                    {virusCells[i][j] === 1 && formatNumber(grid[i][j])}
+                    {activeCells[i][j] === 1 && formatNumber(grid[i][j])}
                 </td>
             )
         }
