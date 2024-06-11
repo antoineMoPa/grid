@@ -125,3 +125,35 @@ table {
     line-height: 0.8rem;
     opacity: 0.5;
 }
+
+@media (max-width: 768px) {
+    .top-left-bar {
+        position: static;
+    }
+    .top-right-bar {
+        position: static;
+    }
+    .bottom-right-bar {
+        position: static;
+    }
+    .bottom-left-bar {
+        position: static;
+    }
+}
+
+@media (min-width: 768px) {
+    .arrow-keys {
+        display: none !important;
+    }
+}
+
+.arrow-keys {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+
+    .break {
+        flex-basis: 100%;
+        height: 0;
+    }
+}

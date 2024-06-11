@@ -30,36 +30,67 @@ const difficultyMap = {
     }
 }
 
+class MobileKeySource extends EventTarget {
+}
+
+// Mobile key event source
+export const mobileKeySource = new MobileKeySource();
+
 // Keyboard listener with standard repeat delay across devices
-const keyListener = (keys: string[], callback: (event: KeyboardEvent) => void, repeat_delay = 28, timeout_delay = 100) => {
+const keyListener = (keys: string[], callback: (event?: KeyboardEvent) => void, repeat_delay = 28, timeout_delay = 100) => {
     let interval: ReturnType<typeof setInterval>;
     let timeout: ReturnType<typeof setTimeout>;
     let repeat = false;
 
-    window.addEventListener('keydown', (e) => {
-        if (keys.includes(e.key) && !repeat) {
-            e.preventDefault();
+    const keyDown = (key: string, e?: KeyboardEvent) => {
+        if (keys.includes(key) && !repeat) {
+            e?.preventDefault();
             callback(e);
             repeat = true;
             timeout = setTimeout(() => {
                 interval = setInterval(callback.bind(this, e), repeat_delay);
             }, timeout_delay);
         }
-    });
+    };
 
-    window.addEventListener('keyup', (e) => {
-        if (keys.includes(e.key)) {
+    const keyUp = (key: string) => {
+        if (keys.includes(key)) {
             repeat = false;
             clearInterval(interval);
             clearTimeout(timeout);
         }
+    }
+
+    window.addEventListener('keydown', (e) => {
+        keyDown(e.key, e);
+    });
+
+    window.addEventListener('keyup', (e) => {
+        keyUp(e.key);
+    });
+
+    mobileKeySource.addEventListener('keydown', (e) => {
+        console.log('Mobile key down', (e as CustomEvent).detail);
+        keyDown((e as CustomEvent).detail);
+    });
+
+    mobileKeySource.addEventListener('keyup', (e) => {
+        keyUp((e as CustomEvent).detail);
     });
 }
 
+const mobileUiHeight = 100;
+const screenWidth = window.innerWidth;
+const screenHeight = window.innerHeight - mobileUiHeight;
+const tileSize = 22;
+const availableTilesWidth = screenWidth / tileSize;
+const availableTilesHeight = screenHeight / tileSize;
+
+
 export class GameEngine {
     difficulty: Difficulty = EASY;
-    HEIGHT = 25;
-    WIDTH = 30;
+    HEIGHT = Math.floor(Math.min(25, availableTilesHeight));
+    WIDTH = Math.floor(Math.min(30, availableTilesWidth));
     grid = tf.zeros([this.HEIGHT, this.WIDTH]);
     activeCells = tf.zeros([this.HEIGHT, this.WIDTH]);
     virusCells = tf.zeros([this.HEIGHT, this.WIDTH]);
@@ -130,7 +161,7 @@ export class GameEngine {
 
     bindEvents() {
         keyListener(['w', 'W', 'ArrowUp'], (e) => {
-            if (e.shiftKey) {
+            if (e?.shiftKey) {
                 this.autoSweep([-1, 0])
             } else {
                 this.moveTo({
@@ -141,7 +172,7 @@ export class GameEngine {
         });
 
         keyListener(['s', 'S', 'ArrowDown'], (e) => {
-            if (e.shiftKey) {
+            if (e?.shiftKey) {
                 this.autoSweep([1, 0])
             } else {
                 this.moveTo({
@@ -152,7 +183,7 @@ export class GameEngine {
         });
 
         keyListener(['a', 'A', 'ArrowLeft'], (e) => {
-            if (e.shiftKey) {
+            if (e?.shiftKey) {
                 this.autoSweep([0, -1])
             } else {
                 this.moveTo({
@@ -163,7 +194,7 @@ export class GameEngine {
         });
 
         keyListener(['d', 'D', 'ArrowRight'], (e) => {
-            if (e.shiftKey) {
+            if (e?.shiftKey) {
                 this.autoSweep([0, 1])
             } else {
                 this.moveTo({

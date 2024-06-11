@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 import classNames from 'classnames'
-import { GameEngine, EASY, MEDIUM, HARD, Difficulty } from './GameEngine'
+import { GameEngine, EASY, MEDIUM, HARD, Difficulty, mobileKeySource } from './GameEngine'
 
 import '@tensorflow/tfjs-backend-webgl';
 import {ButtonGroup, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Switch} from "@nextui-org/react";
@@ -177,14 +177,82 @@ function App() {
         }
     }, [leaveTrail, handleLeaveTrailChange]);
 
-    const handleTrailSizeChange = useCallback((value: string) => {
-        gameEngine.trailSize = parseInt(value);
+    const handleTrailSizeChange = useCallback((value: number) => {
+        gameEngine.trailSize = value;
     }, [gameEngine]);
 
     const trailSize = gameEngine.trailSize;
 
+    // Callbacks for mobile arrow keys
+    const leftStart = useCallback(() => {
+        const event = new CustomEvent('keydown', { detail: 'ArrowLeft' });
+        mobileKeySource.dispatchEvent(event);
+    }, []);
+
+    const leftEnd = useCallback(() => {
+        const event = new CustomEvent('keyup', { detail: 'ArrowLeft' });
+        mobileKeySource.dispatchEvent(event);
+    }, []);
+
+    const rightStart = useCallback(() => {
+        const event = new CustomEvent('keydown', { detail: 'ArrowRight' });
+        mobileKeySource.dispatchEvent(event);
+    }, []);
+
+    const rightEnd = useCallback(() => {
+        const event = new CustomEvent('keyup', { detail: 'ArrowRight' });
+        mobileKeySource.dispatchEvent(event);
+    }, []);
+
+    const upStart = useCallback(() => {
+        const event = new CustomEvent('keydown', { detail: 'ArrowUp' });
+        mobileKeySource.dispatchEvent(event);
+    }, []);
+
+    const upEnd = useCallback(() => {
+        const event = new CustomEvent('keyup', { detail: 'ArrowUp' });
+        mobileKeySource.dispatchEvent(event);
+    }, []);
+
+    const downStart = useCallback(() => {
+        const event = new CustomEvent('keydown', { detail: 'ArrowDown' });
+        mobileKeySource.dispatchEvent(event);
+    }, []);
+
+    const downEnd = useCallback(() => {
+        const event = new CustomEvent('keyup', { detail: 'ArrowDown' });
+        mobileKeySource.dispatchEvent(event);
+    }, []);
+
     return (
         <>
+            <table ref={tableRef}>
+                <tbody>
+                    {rows}
+                </tbody>
+            </table>
+            <div className="mobile-ui">
+                <div className="arrow-keys">
+                    <Button size="sm"
+                        onTouchStart={upStart}
+                        onTouchEnd={upEnd}
+                        className="up mt-3 m-1 mr-8">↑</Button>
+                    <div className="break"></div>
+                    <Button size="sm"
+                        onTouchStart={leftStart}
+                        onTouchEnd={leftEnd}
+                        className="left mr-1">←</Button>
+                    <Button size="sm"
+                        onTouchStart={rightStart}
+                        onTouchEnd={rightEnd}
+                        className="right">→</Button>
+                    <div className="break"></div>
+                    <Button size="sm"
+                        onTouchStart={downStart}
+                        onTouchEnd={downEnd}
+                        className="down mr-8 mt-1">↓</Button>
+                </div>
+            </div>
             <div className="top-left-bar">
                 <p className="generation">Generation {gameEngine.generation}</p>
                 {
@@ -264,11 +332,6 @@ function App() {
             <div className="bottom-right-bar">
                 <Button className="surrender" onClick={surrender}>Surrender</Button>
             </div>
-            <table ref={tableRef}>
-                <tbody>
-                    {rows}
-                </tbody>
-            </table>
             <>
                 <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={onClose}>
                     <ModalContent>
