@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { GameEngine, EASY, MEDIUM, HARD, Difficulty } from './GameEngine'
 
 import '@tensorflow/tfjs-backend-webgl';
-import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Switch, Input} from "@nextui-org/react";
+import {ButtonGroup, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Switch} from "@nextui-org/react";
 
 import { useCookies } from 'react-cookie';
 
@@ -181,6 +181,8 @@ function App() {
         gameEngine.trailSize = parseInt(value);
     }, [gameEngine]);
 
+    const trailSize = gameEngine.trailSize;
+
     return (
         <>
             <div className="top-left-bar">
@@ -194,18 +196,20 @@ function App() {
                 }
                 <div className="difficulty mt-4">
                     <p className="mb-2">Difficulty:</p>
-                    <Button onClick={() => setDifficulty(EASY)}
-                        className={classNames("mr-1", { selected: difficulty == EASY })}>
-                        {difficultyToString(EASY)}
-                    </Button>
-                    <Button onClick={() => setDifficulty(MEDIUM)}
-                        className={classNames("mr-1", { selected: difficulty == MEDIUM })}>
-                        {difficultyToString(MEDIUM)}
-                    </Button>
-                    <Button onClick={() => setDifficulty(HARD)}
-                        className={classNames({ selected: difficulty == HARD })}>
-                        {difficultyToString(HARD)}
-                    </Button>
+                    <ButtonGroup>
+                        <Button onClick={() => setDifficulty(EASY)}
+                            className={classNames("mr-1", { selected: difficulty == EASY })}>
+                            {difficultyToString(EASY)}
+                        </Button>
+                        <Button onClick={() => setDifficulty(MEDIUM)}
+                            className={classNames("mr-1", { selected: difficulty == MEDIUM })}>
+                            {difficultyToString(MEDIUM)}
+                        </Button>
+                        <Button onClick={() => setDifficulty(HARD)}
+                            className={classNames({ selected: difficulty == HARD })}>
+                            {difficultyToString(HARD)}
+                        </Button>
+                    </ButtonGroup>
                 </div>
                 <div className="leave-trail mt-4">
                     <Switch isSelected={leaveTrail} onValueChange={handleLeaveTrailChange}>
@@ -215,7 +219,23 @@ function App() {
                     { (leaveTrail) &&
                         <div>
                             <p>Tail size:</p>
-                            <Input type="number" defaultValue={gameEngine.trailSize.toString()} onValueChange={handleTrailSizeChange} />
+                            <ButtonGroup>
+                                <Button size="sm"
+                                    className={classNames({ selected: trailSize == 5 })}
+                                    onClick={() => handleTrailSizeChange(5)}>5</Button>
+                                <Button size="sm"
+                                    className={classNames({ selected: trailSize == 10 })}
+                                    onClick={() => handleTrailSizeChange(10)}>10</Button>
+                                <Button size="sm"
+                                    className={classNames({ selected: trailSize == 50 })}
+                                    onClick={() => handleTrailSizeChange(50)}>50</Button>
+                                <Button size="sm"
+                                    className={classNames({ selected: trailSize == 100 })}
+                                    onClick={() => handleTrailSizeChange(100)}>100</Button>
+                                <Button size="sm"
+                                    className={classNames({ selected: trailSize == 200 })}
+                                    onClick={() => handleTrailSizeChange(200)}>200</Button>
+                            </ButtonGroup>
                         </div>
                     }
                     <p className="text-xs text-slate-500">Leave trail when around virus to help slow growth.</p>

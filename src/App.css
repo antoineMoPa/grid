@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+
+button {
+    &.selected {
+        background: #555;
+    }
+
+    &[data-focus-visible=true] {
+        outline: none;
+        border: none;
+        box-shadow: none;
+    }
+}
+
 table {
     border-collapse: separate;
     margin: auto;
@@ -51,17 +64,6 @@ table {
             background: #f00;
             color: #fff;
         }
-    }
-}
-
-.difficulty {
-    button[data-focus-visible=true] {
-        outline: none;
-        border: none;
-        box-shadow: none;
-    }
-    .selected {
-        background: #555;
     }
 }
 
