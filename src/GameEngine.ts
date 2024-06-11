@@ -60,7 +60,7 @@ export class GameEngine {
     difficulty: Difficulty = EASY;
     HEIGHT = 25;
     WIDTH = 30;
-    grid = tf.ones([this.HEIGHT, this.WIDTH]);
+    grid = tf.zeros([this.HEIGHT, this.WIDTH]);
     activeCells = tf.zeros([this.HEIGHT, this.WIDTH]);
     virusCells = tf.zeros([this.HEIGHT, this.WIDTH]);
     focusedCell: [number, number] = [0, 0];
