@@ -102,6 +102,25 @@ export class GameEngine {
     virusMoveRate = DEFAULT_VIRUS_MOVE_RATE;
     leaveTrail = false;
     trailSize = 5;
+    enableAutoSweep = true;
+
+    setEnableAutoSweep(value: boolean) {
+        this.enableAutoSweep = value;
+        this.onUpdateCallback();
+    }
+
+    toggleAutoSweep() {
+        this.setEnableAutoSweep(!this.enableAutoSweep);
+    }
+
+    setLeaveTrail(value: boolean) {
+        this.leaveTrail = value;
+        this.onUpdateCallback();
+    }
+
+    toggleLeaveTrail() {
+        this.setLeaveTrail(!this.leaveTrail);
+    }
 
     stats: {
         activeCellCount: number,
@@ -213,26 +232,35 @@ export class GameEngine {
         return i >= 0 && i < this.HEIGHT && j >= 0 && j < this.WIDTH;
     }
 
-    autoSweep(direction: [number, number]) {
+    async autoSweep(direction: [number, number], distance = Infinity) {
         let i = this.focusedCell[0];
         let j = this.focusedCell[1];
+        let distanceCounter = 0;
         let delay = 0;
-        while (this.checkBounds([i, j])) {
+        const promises = [];
+
+        while (distanceCounter < distance && this.checkBounds([i, j])) {
             const localI = i;
             const localJ = j;
 
-            setTimeout(() => {
-                this.moveTo({
-                    initialCellPosition: [localI, localJ],
-                    destinationCellPosition: [localI + direction[0], localJ + direction[1]]
-                });
-            }, delay);
+            promises.push(new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    this.moveTo({
+                        initialCellPosition: [localI, localJ],
+                        destinationCellPosition: [localI + direction[0], localJ + direction[1]]
+                    });
+                    resolve();
+                }, delay);
+            }));
 
             i += direction[0];
             j += direction[1];
 
             delay += 30;
+            distanceCounter++;
         }
+
+        await Promise.all(promises);
     }
 
     moveToMeta(
@@ -384,8 +412,18 @@ export class GameEngine {
         this.onUpdateCallback();
     }
 
-    onCellClick([i, j]: [number, number]) {
+    async onCellClick([i, j]: [number, number], {forceAutoSweep = false } = {}) {
         const activeCells = this.activeCells.arraySync() as number[][];
+        const oldI = this.focusedCell[0];
+        const oldJ = this.focusedCell[1];
+
+        if (this.enableAutoSweep || forceAutoSweep) {
+            // Auto Sweep up/down, then left right
+            const distanceI = Math.abs(i - oldI);
+            await this.autoSweep([Math.sign(i - oldI), 0], distanceI);
+            const distanceJ = Math.abs(j - oldJ);
+            await this.autoSweep([0, Math.sign(j - oldJ)], distanceJ);
+        }
 
         if (activeCells[i][j] === 1) {
             this.focusedCell = [i, j];

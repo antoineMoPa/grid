@@ -57,8 +57,6 @@ function App() {
     const gameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [cookies, setCookie] = useCookies(['difficulty']);
     const [difficulty, setDifficulty] = useState<Difficulty>(cookies.difficulty || EASY);
-    // Game engine has the source of truth for leave trail, this var is just for faster ui update
-    const [leaveTrail, setLeaveTrail] = useState(false);
 
     if (!gameEngineRef.current) {
         gameEngineRef.current = new GameEngine();
@@ -80,10 +78,6 @@ function App() {
     const grid = gameEngine.grid.arraySync() as number[][];
     const activeCells = gameEngine.activeCells.arraySync() as number[][];
     const virusCells = gameEngine.virusCells.arraySync() as number[][];
-
-    const onCellClick = ([i, j]: [number, number]) => {
-        gameEngine.onCellClick([i, j]);
-    };
 
     const replaceGameInterval = (delay: number) => {
         if (gameIntervalRef.current) {
@@ -130,7 +124,7 @@ function App() {
                         focused: gameEngine.focusedCell[0] === i && gameEngine.focusedCell[1] === j,
                         virus: virusCells[i][j] === 1,
                     })}
-                    onClick={() => onCellClick([i, j])}
+                    onClick={(e) => gameEngine.onCellClick([i, j], { forceAutoSweep: e.shiftKey })}
                 >
                     {virusCells[i][j] === 1 && formatNumber(grid[i][j])}
                     {activeCells[i][j] === 1 && formatNumber(grid[i][j])}
@@ -159,23 +153,21 @@ function App() {
         setCookie('difficulty', difficulty);
     }, [difficulty, gameEngine, tableRef]);
 
-    const handleLeaveTrailChange = useCallback((value: boolean) => {
-        gameEngine.leaveTrail = value;
-        setLeaveTrail(value);
-    }, [gameEngine]);
-
     // Listen to 't' key to toggle trail mode
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key.toLowerCase() === 't') {
-                handleLeaveTrailChange(!leaveTrail);
+                gameEngine.toggleLeaveTrail();
+            }
+            if (e.key.toLowerCase() === 'p') {
+                gameEngine.toggleAutoSweep();
             }
         }
         document.addEventListener('keydown', handleKeyDown);
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         }
-    }, [leaveTrail, handleLeaveTrailChange]);
+    }, []);
 
     const handleTrailSizeChange = useCallback((value: number) => {
         gameEngine.trailSize = value;
@@ -223,6 +215,14 @@ function App() {
         const event = new CustomEvent('keyup', { detail: 'ArrowDown' });
         mobileKeySource.dispatchEvent(event);
     }, []);
+
+    const toggleAutoSweep = useCallback(() => {
+        gameEngine.toggleAutoSweep();
+    }, [gameEngine]);
+
+    const toggleLeaveTrail = useCallback(() => {
+        gameEngine.toggleLeaveTrail();
+    }, [gameEngine]);
 
     return (
         <>
@@ -280,11 +280,17 @@ function App() {
                     </ButtonGroup>
                 </div>
                 <div className="leave-trail mt-4">
-                    <Switch isSelected={leaveTrail} onValueChange={handleLeaveTrailChange}>
-                        Trail Wall Mode <span className="keyboard-shortcut">t</span>
+                    <Switch isSelected={gameEngine.enableAutoSweep} onValueChange={toggleAutoSweep}>
+                        Enable Auto Sweep <span className="keyboard-shortcut">P</span>
                         <br/>
                     </Switch>
-                    { (leaveTrail) &&
+                    <p className="text-xs text-slate-500">You can always autosweep using Shift + Arrows</p>
+                    <br/>
+                    <Switch isSelected={gameEngine.leaveTrail} onValueChange={toggleLeaveTrail}>
+                        Trail Wall Mode <span className="keyboard-shortcut">T</span>
+                        <br/>
+                    </Switch>
+                    { (gameEngine.leaveTrail) &&
                         <div>
                             <p>Tail size:</p>
                             <ButtonGroup>
