@@ -30,6 +30,19 @@ const difficultyMap = {
     }
 }
 
+type ReplayState = {
+    grid: number[][],
+    activeCells: number[][],
+    virusCells: number[][],
+    focusedCell: [number, number],
+    generation: number,
+    stats: {
+        activeCellCount: number,
+        virusCellCount: number,
+        wasFocusedCellEaten: boolean,
+    }
+}
+
 class MobileKeySource extends EventTarget {
 }
 
@@ -86,7 +99,6 @@ const tileSize = 22;
 const availableTilesWidth = screenWidth / tileSize;
 const availableTilesHeight = screenHeight / tileSize;
 
-
 export class GameEngine {
     difficulty: Difficulty = EASY;
     HEIGHT = Math.floor(Math.min(25, availableTilesHeight));
@@ -103,6 +115,7 @@ export class GameEngine {
     leaveTrail = false;
     trailSize = 5;
     enableAutoSweep = true;
+    replay = [];
 
     setEnableAutoSweep(value: boolean) {
         this.enableAutoSweep = value;
@@ -498,6 +511,39 @@ export class GameEngine {
                 this.generation++;
             }
         });
+
+        this.storeReplay();
+    }
+
+    storeReplay() {
+        this.replay.push({
+            grid: this.grid.dataSync(),
+            activeCells: this.activeCells.dataSync(),
+            virusCells: this.virusCells.dataSync(),
+            focusedCell: structuredClone(this.focusedCell),
+            generation: this.generation,
+            stats: structuredClone(this.stats)
+        });
+    }
+
+    restoreReplayState(state: ReplayState) {
+        this.grid = tf.tensor(state.grid);
+        this.activeCells = tf.tensor(state.activeCells);
+        this.virusCells = tf.tensor(state.virusCells);
+        this.focusedCell = structuredClone(state.focusedCell);
+        this.generation = state.generation;
+        this.stats = structuredClone(state.stats);
+    }
+
+    generateShareImage() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+
+
+        this.restoreReplayState(this.replay[0]);
+
     }
 
     detectGameStatus(): boolean {
@@ -512,6 +558,7 @@ export class GameEngine {
 
         if (virusCellsCount === 0) {
             this.hasWon = true;
+            this.generateShareImage();
             return true;
         }
 
