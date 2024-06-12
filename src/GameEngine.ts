@@ -79,7 +79,7 @@ const keyListener = (keys: string[], callback: (event?: KeyboardEvent) => void, 
     });
 }
 
-const mobileUiHeight = 100;
+const mobileUiHeight = 180;
 const screenWidth = window.innerWidth;
 const screenHeight = window.innerHeight - mobileUiHeight;
 const tileSize = 22;

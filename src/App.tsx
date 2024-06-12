@@ -226,31 +226,31 @@ function App() {
 
     return (
         <>
-            <table ref={tableRef}>
+            <table ref={tableRef} className="mt-4">
                 <tbody>
                     {rows}
                 </tbody>
             </table>
             <div className="mobile-ui">
-                <div className="arrow-keys">
-                    <Button size="sm"
+                <div className="arrow-keys mt-2">
+                    <Button size="md"
                         onTouchStart={upStart}
                         onTouchEnd={upEnd}
-                        className="up mt-3 m-1 mr-8">↑</Button>
+                        className="up mt-3 m-1 mr-10">↑</Button>
                     <div className="break"></div>
-                    <Button size="sm"
+                    <Button size="md"
                         onTouchStart={leftStart}
                         onTouchEnd={leftEnd}
                         className="left mr-1">←</Button>
-                    <Button size="sm"
+                    <Button size="md"
                         onTouchStart={rightStart}
                         onTouchEnd={rightEnd}
                         className="right">→</Button>
                     <div className="break"></div>
-                    <Button size="sm"
+                    <Button size="md"
                         onTouchStart={downStart}
                         onTouchEnd={downEnd}
-                        className="down mr-8 mt-1">↓</Button>
+                        className="down mr-10 mt-1">↓</Button>
                 </div>
             </div>
             <div className="top-left-bar">

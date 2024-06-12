@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body {
+    user-select: none;
+}
 
 button {
     &.selected {
@@ -13,6 +16,8 @@ button {
         border: none;
         box-shadow: none;
     }
+
+    user-select: none;
 }
 
 table {
