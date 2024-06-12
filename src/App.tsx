@@ -49,7 +49,7 @@ const difficultyToString = (difficulty: string) => {
     }
 }
 
-function InstructionsModal({ gameEngine: GameEngine }) {
+function InstructionsModal({ gameEngine } : { gameEngine: GameEngine }) {
     const [cookies, setCookie] = useCookies(['shown-instructions']);
     const {isOpen, onOpen, onOpenChange} = useDisclosure();
     const [shownInstructions, setShownInstructions] = useState(cookies['shown-instructions']);
