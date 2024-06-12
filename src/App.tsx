@@ -49,6 +49,46 @@ const difficultyToString = (difficulty: string) => {
     }
 }
 
+function InstructionsModal({ gameEngine: GameEngine }) {
+    const [cookies, setCookie] = useCookies(['shown-instructions']);
+    const {isOpen, onOpen, onOpenChange} = useDisclosure();
+    const [shownInstructions, setShownInstructions] = useState(cookies['shown-instructions']);
+
+    const onClose = useCallback(() => {
+        setCookie('shown-instructions', true);
+        setShownInstructions(true);
+        gameEngine.resetGame();
+    }, []);
+
+    if (!shownInstructions && !isOpen) {
+        onOpen();
+    }
+
+    return (
+        <>
+            <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={onClose}>
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader>Instructions</ModalHeader>
+                            <ModalBody>
+                                <p>Use mouse to change active cell.</p>
+                                <p>Use arrows to move around.</p>
+                                <p>Collect numbers and use these to fight the virus.</p>
+                                <p>Eradicate the virus to win!</p>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button color="primary" onPress={onClose}>
+                                    Close
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
+        </>
+    )
+}
 
 function App() {
     const tableRef = useRef<HTMLTableElement | null>(null);
@@ -321,14 +361,8 @@ function App() {
                     <p>Virus: {gameEngine.stats.virusCellCount}</p>
                 </div>
             </div>
+            <InstructionsModal gameEngine={gameEngine}/>
             <div className="bottom-left-bar">
-                <h2>Instructions:</h2>
-                <p>Use mouse to change active cell.</p>
-                <p>Use arrows to move around.</p>
-                <p>Collect numbers and use these to fight the virus.</p>
-                <br/>
-                <p>Eradicate the virus to win!</p>
-                <br/>
                 <p className="text-xs">Like the repo on Github:<br/>
                     <a href="https://github.com/antoineMoPa/grid" target="_blank">
                         https://github.com/antoineMoPa/grid
