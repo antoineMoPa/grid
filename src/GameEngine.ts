@@ -237,6 +237,7 @@ export class GameEngine {
         let j = this.focusedCell[1];
         let distanceCounter = 0;
         let delay = 0;
+        let cancel = false;
         const promises = [];
 
         while (distanceCounter < distance && this.checkBounds([i, j])) {
@@ -245,10 +246,20 @@ export class GameEngine {
 
             promises.push(new Promise<void>((resolve) => {
                 setTimeout(() => {
-                    this.moveTo({
+                    if (cancel) {
+                        resolve();
+                        return;
+                    }
+
+                    const result = this.moveTo({
                         initialCellPosition: [localI, localJ],
                         destinationCellPosition: [localI + direction[0], localJ + direction[1]]
                     });
+
+                    if (!result) {
+                        cancel = true;
+                    }
+
                     resolve();
                 }, delay);
             }));
@@ -357,7 +368,7 @@ export class GameEngine {
     moveTo(
         {initialCellPosition, destinationCellPosition}:
         {initialCellPosition: [number, number], destinationCellPosition: [number, number]}
-    ) {
+    ): boolean {
         const grid = this.grid.arraySync() as number[][];
         const playerCells = this.activeCells.arraySync() as number[][];
         const enemyCells = this.virusCells.arraySync() as number[][];
@@ -372,7 +383,7 @@ export class GameEngine {
         });
 
         if (!result) {
-            return;
+            return result;
         }
 
         this.activeCells = tf.tensor(playerCells);
@@ -383,6 +394,8 @@ export class GameEngine {
         this.focusedCell = structuredClone(destinationCellPosition);
 
         this.onUpdateCallback();
+
+        return true;
     }
 
     moveVirusTo(
