@@ -476,6 +476,10 @@ export class GameEngine {
     }
 
     step() {
+        if (this.hasWon || this.hasLost) {
+            return;
+        }
+
         // Process actions
         while (this.actionQueue.length > 0) {
             // Call action with this as context
@@ -557,26 +561,42 @@ export class GameEngine {
     }
 
     async generateShareImage() {
+        // Disable on mobile
+        if (window.innerWidth < 768) {
+            return;
+        }
+
         this.onGeneratedImageCallback(null);
+        const headlessEngine = new GameEngine();
         const canvas = this.resultCanvas;
         const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
         const headerSize = 120;
         const margin = 10;
 
+        const intermediateStepsCount = 4;
+        const intermediateStepIndices = [];
+
+
+        for (let i = 0; i < intermediateStepsCount; i++) {
+            intermediateStepIndices.push(Math.floor(i / intermediateStepsCount * this.replay.length));
+        }
+
         const replaysIndices = [
             0,
-            Math.floor(1 / 3 * this.replay.length),
-            Math.floor(2 / 3 * this.replay.length),
+            ...intermediateStepIndices,
             this.replay.length - 1
         ];
 
+        ctx.shadowColor="black";
+        ctx.shadowBlur=7;
+
         for (let i = 0; i < replaysIndices.length; i++) {
             const replayIndex = replaysIndices[i];
-            this.restoreReplayState(this.replay[replayIndex]);
+            headlessEngine.restoreReplayState(this.replay[replayIndex]);
 
-            const image = await renderGrid(this);
+            const image = await renderGrid(headlessEngine);
 
-            const columns = 2;
+            const columns = 3;
 
             if (i === 0) {
                 canvas.width = image.width * columns + margin * (columns + 1);
@@ -593,18 +613,15 @@ export class GameEngine {
             ctx.drawImage(image, x, y);
 
             // Stats block
-            // Background
-            ctx.fillStyle = 'rgba(0.2,0.2,0.2,0.6)';
-            ctx.fillRect(x, y, 100, 40);
             ctx.font = 'bold 10px Arial';
             ctx.textAlign = 'left';
             ctx.fillStyle = '#ffffff';
             const stats1 = `Generation: ${this.generation}`;
-            ctx.fillText(stats1, x + 10, y + 10);
+            ctx.fillText(stats1, x + 10, y + 20);
             const stats2 = `You: ${this.stats.activeCellCount}`;
-            ctx.fillText(stats2, x + 10, y + 20);
+            ctx.fillText(stats2, x + 10, y + 30);
             const stats3 = `Virus: ${this.stats.virusCellCount}`;
-            ctx.fillText(stats3, x + 10, y + 30);
+            ctx.fillText(stats3, x + 10, y + 40);
         }
 
         // Draw header

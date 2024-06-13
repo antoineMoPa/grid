@@ -103,6 +103,12 @@ function App() {
         setCanvasResult(canvas);
     }
 
+    const [bigShareImage, setBigShareImage] = useState(false);
+
+    const toggleBigShareImage = useCallback(() => {
+        setBigShareImage(!bigShareImage);
+    }, [bigShareImage]);
+
     const gameEngine = gameEngineRef.current;
     const [generation, setGeneration] = useState(0);
 
@@ -133,6 +139,7 @@ function App() {
 
     const onClose = useCallback(() => {
         replaceGameInterval(GAME_INTERVAL);
+        setBigShareImage(false);
         gameEngineRef.current?.resetGame();
     }, []);
 
@@ -144,9 +151,12 @@ function App() {
     }, []);
 
     useEffect(() => {
+        document.querySelectorAll('table')[0].focus();
+        if (gameEngine.difficulty === difficulty) {
+            return;
+        }
         gameEngine.difficulty = difficulty;
         gameEngine.resetGame();
-        document.querySelectorAll('table')[0].focus();
         setCookie('difficulty', difficulty);
     }, [difficulty, gameEngine, tableRef]);
 
@@ -326,33 +336,27 @@ function App() {
                 <Button className="surrender" onClick={surrender}>Surrender</Button>
             </div>
             <>
-                <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={onClose}>
+                <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={onClose} isDismissable={false}>
                     <ModalContent className="win-modal">
                         {(onClose) => (
                             <>
-                                    <p>
+                                    <div>
                                         { gameEngine.hasWon && gameWinMessage(
                                             gameEngine.generation,
                                             difficultyToString(difficulty)
                                         ) }
                                         { gameEngine.hasLost && gameLostMessage() }
-                                    </p>
+                                    </div>
                                 { canvasResult &&
                                     <div>
-                                        <p className="text-right">
-                                            <Button
-                                                className="mt-4 mr-4"
-                                                onClick={() => {
-                                                canvasResult?.toBlob((blob) => {
-                                                    navigator.clipboard.write([
-                                                        new ClipboardItem({ "image/png": blob as Blob })
-                                                    ]);
-                                                }, "image/png");
-                                                }}>
-                                                Copy Image to Clipboard
-                                            </Button>
+                                        <p className="text-right m-4">
+                                            <a onClick={toggleBigShareImage}>
+                                                <img src={canvasResult.toDataURL()} alt="game result" className='mt-4 image-result cursor-pointer'/>
+                                            </a>
                                         </p>
-                                        <p className="text-sm text-slate-500 text-right mr-4">Share your result!</p>
+                                        <p className="text-sm text-slate-500 text-center">
+                                            Click on the image to enlarge
+                                        </p>
                                     </div>
                                 }
                                 <ModalFooter>
@@ -365,6 +369,32 @@ function App() {
                     </ModalContent>
                 </Modal>
             </>
+            { canvasResult &&
+                <div
+                    className={classNames(
+                        {
+                            'hidden': !bigShareImage,
+                            'big-share-image': bigShareImage
+                        }
+                    )
+                    }
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleBigShareImage();
+                    }}
+                >
+                    <div className="close-button"
+                        onClick={toggleBigShareImage}
+                    >
+                        <svg aria-hidden="true" fill="none" focusable="false" height="1em" role="presentation" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="1em"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+                    </div>
+                    <img src={canvasResult.toDataURL()}
+
+                        alt="game result"
+                    />
+                </div>
+            }
         </>
     )
 }
