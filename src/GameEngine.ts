@@ -174,7 +174,6 @@ export class GameEngine {
         this.hasWon = false;
         this.hasLost = false;
         this.virusMoveRate = DEFAULT_VIRUS_MOVE_RATE;
-        this.replay = [];
 
         // initialize first activeCell
         const activeCells = this.activeCells.arraySync() as number[][];
@@ -206,6 +205,7 @@ export class GameEngine {
         }
 
         this.generation = 0;
+        this.replay = [];
     }
 
     bindEvents() {
@@ -531,9 +531,9 @@ export class GameEngine {
             if (!this.detectGameStatus()) {
                 this.generation++;
             }
-        });
 
-        this.storeReplay();
+            this.storeReplay();
+        });
     }
 
     saveState(): ReplayState {
@@ -578,7 +578,7 @@ export class GameEngine {
 
 
         for (let i = 0; i < intermediateStepsCount; i++) {
-            intermediateStepIndices.push(Math.floor(i / intermediateStepsCount * this.replay.length));
+            intermediateStepIndices.push(Math.floor((i + 1) / intermediateStepsCount * this.replay.length));
         }
 
         const replaysIndices = [
@@ -616,11 +616,11 @@ export class GameEngine {
             ctx.font = 'bold 10px Arial';
             ctx.textAlign = 'left';
             ctx.fillStyle = '#ffffff';
-            const stats1 = `Generation: ${this.generation}`;
+            const stats1 = `Generation: ${headlessEngine.generation}`;
             ctx.fillText(stats1, x + 10, y + 20);
-            const stats2 = `You: ${this.stats.activeCellCount}`;
+            const stats2 = `You: ${headlessEngine.stats.activeCellCount}`;
             ctx.fillText(stats2, x + 10, y + 30);
-            const stats3 = `Virus: ${this.stats.virusCellCount}`;
+            const stats3 = `Virus: ${headlessEngine.stats.virusCellCount}`;
             ctx.fillText(stats3, x + 10, y + 40);
         }
 
@@ -657,12 +657,14 @@ export class GameEngine {
 
         if (virusCellsCount === 0) {
             this.hasWon = true;
+            this.saveState();
             this.generateShareImage();
             return true;
         }
 
         if (activeCellsCount === 0) {
             this.hasLost = true;
+            this.saveState();
             this.generateShareImage();
             return true;
         }
