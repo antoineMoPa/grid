@@ -1,10 +1,25 @@
 import * as tf from '@tensorflow/tfjs';
+import { renderGrid } from './renderGrid';
 
 tf.setBackend('webgl').then(() => {
     console.log('WebGL backend initialized');
 });
 
 const DEFAULT_VIRUS_MOVE_RATE = 0.2;
+
+export const difficultyToString = (difficulty: string) => {
+    switch (difficulty) {
+        case EASY:
+            return 'Easy';
+        case MEDIUM:
+            return 'Medium';
+        case HARD:
+            return 'Hard';
+        default:
+            return 'Unknown';
+    }
+}
+
 
 export const EASY = "level-0";
 export const MEDIUM = "level-1";
@@ -30,7 +45,7 @@ const difficultyMap = {
     }
 }
 
-type ReplayState = {
+export type ReplayState = {
     grid: number[][],
     activeCells: number[][],
     virusCells: number[][],
@@ -50,7 +65,7 @@ class MobileKeySource extends EventTarget {
 export const mobileKeySource = new MobileKeySource();
 
 // Keyboard listener with standard repeat delay across devices
-const keyListener = (keys: string[], callback: (event?: KeyboardEvent) => void, repeat_delay = 28, timeout_delay = 100) => {
+const keyListener = (keys: string[], callback: (event?: KeyboardEvent) => void, repeat_delay = 33, timeout_delay = 150) => {
     let interval: ReturnType<typeof setInterval>;
     let timeout: ReturnType<typeof setTimeout>;
     let repeat = false;
@@ -83,7 +98,6 @@ const keyListener = (keys: string[], callback: (event?: KeyboardEvent) => void, 
     });
 
     mobileKeySource.addEventListener('keydown', (e) => {
-        console.log('Mobile key down', (e as CustomEvent).detail);
         keyDown((e as CustomEvent).detail);
     });
 
@@ -114,8 +128,12 @@ export class GameEngine {
     virusMoveRate = DEFAULT_VIRUS_MOVE_RATE;
     leaveTrail = false;
     trailSize = 5;
-    enableAutoSweep = true;
-    replay = [];
+    enableAutoSweep = window.innerWidth < 768;
+    replay: ReplayState[] = [];
+    onUpdateCallback = () => {};
+    onGeneratedImageCallback = (_canvas: HTMLCanvasElement | null) => {};
+
+    resultCanvas = document.createElement('canvas');
 
     setEnableAutoSweep(value: boolean) {
         this.enableAutoSweep = value;
@@ -141,8 +159,6 @@ export class GameEngine {
         wasFocusedCellEaten: boolean,
     } = { activeCellCount: 0, virusCellCount: 0, wasFocusedCellEaten: false };
 
-    onUpdateCallback = () => {};
-
     constructor() {
         this.resetGame();
     }
@@ -158,6 +174,7 @@ export class GameEngine {
         this.hasWon = false;
         this.hasLost = false;
         this.virusMoveRate = DEFAULT_VIRUS_MOVE_RATE;
+        this.replay = [];
 
         // initialize first activeCell
         const activeCells = this.activeCells.arraySync() as number[][];
@@ -515,15 +532,19 @@ export class GameEngine {
         this.storeReplay();
     }
 
-    storeReplay() {
-        this.replay.push({
-            grid: this.grid.dataSync(),
-            activeCells: this.activeCells.dataSync(),
-            virusCells: this.virusCells.dataSync(),
+    saveState(): ReplayState {
+        return {
+            grid: this.grid.arraySync() as number[][],
+            activeCells: this.activeCells.arraySync() as number[][],
+            virusCells: this.virusCells.arraySync() as number[][],
             focusedCell: structuredClone(this.focusedCell),
             generation: this.generation,
             stats: structuredClone(this.stats)
-        });
+        };
+    }
+
+    storeReplay() {
+        this.replay.push(this.saveState());
     }
 
     restoreReplayState(state: ReplayState) {
@@ -535,18 +556,79 @@ export class GameEngine {
         this.stats = structuredClone(state.stats);
     }
 
-    generateShareImage() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1024;
-        canvas.height = 1024;
+    async generateShareImage() {
+        this.onGeneratedImageCallback(null);
+        const canvas = this.resultCanvas;
         const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+        const headerSize = 120;
+        const margin = 10;
+
+        const replaysIndices = [
+            0,
+            Math.floor(1 / 3 * this.replay.length),
+            Math.floor(2 / 3 * this.replay.length),
+            this.replay.length - 1
+        ];
+
+        for (let i = 0; i < replaysIndices.length; i++) {
+            const replayIndex = replaysIndices[i];
+            this.restoreReplayState(this.replay[replayIndex]);
+
+            const image = await renderGrid(this);
+
+            const columns = 2;
+
+            if (i === 0) {
+                canvas.width = image.width * columns + margin * (columns + 1);
+                canvas.height = headerSize + margin + (image.height + margin) * Math.ceil(replaysIndices.length / columns) + margin;
+                // White background
+                ctx.fillStyle = '#242424';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
 
 
-        this.restoreReplayState(this.replay[0]);
+            const x = margin + (image.width + margin) * (i % columns);
+            const y = headerSize + (image.height + margin) * Math.floor(i / columns);
 
+            ctx.drawImage(image, x, y);
+
+            // Stats block
+            // Background
+            ctx.fillStyle = 'rgba(0.2,0.2,0.2,0.6)';
+            ctx.fillRect(x, y, 100, 40);
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#ffffff';
+            const stats1 = `Generation: ${this.generation}`;
+            ctx.fillText(stats1, x + 10, y + 10);
+            const stats2 = `You: ${this.stats.activeCellCount}`;
+            ctx.fillText(stats2, x + 10, y + 20);
+            const stats3 = `Virus: ${this.stats.virusCellCount}`;
+            ctx.fillText(stats3, x + 10, y + 30);
+        }
+
+        // Draw header
+        ctx.fillStyle = '#ffffff';
+        const message = this.hasWon ? 'You won!' : 'Virus Won!'
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 30px Arial';
+        ctx.fillText(message, canvas.width / 2, headerSize / 2 - 15);
+
+        // Write level
+        ctx.font = 'bold 10px Arial';
+        ctx.fillText('Level: ' + difficultyToString(this.difficulty), canvas.width / 2, headerSize / 2 + 15);
+
+        ctx.font = 'bold 10px Arial';
+        ctx.fillText('Play at https://antoinemopa.github.io/grid/', canvas.width / 2, headerSize - 20);
+
+        this.onGeneratedImageCallback(canvas);
     }
 
     detectGameStatus(): boolean {
+        if (this.hasWon || this.hasLost) {
+            return true;
+        }
+
         const activeCellsCount = this.activeCells.mul(this.grid).sum().arraySync() as number;
         const virusCellsCount = this.virusCells.mul(this.grid).sum().arraySync() as number;
 
@@ -564,6 +646,7 @@ export class GameEngine {
 
         if (activeCellsCount === 0) {
             this.hasLost = true;
+            this.generateShareImage();
             return true;
         }
 

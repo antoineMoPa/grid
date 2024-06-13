@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 import classNames from 'classnames'
-import { GameEngine, EASY, MEDIUM, HARD, Difficulty, mobileKeySource } from './GameEngine'
+import { GameEngine, EASY, MEDIUM, HARD, difficultyToString, Difficulty, mobileKeySource } from './GameEngine'
 
 import '@tensorflow/tfjs-backend-webgl';
 import {ButtonGroup, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Switch} from "@nextui-org/react";
@@ -36,19 +36,6 @@ const gameLostMessage = () => {
             </ModalBody>
         </>
     );
-}
-
-const difficultyToString = (difficulty: string) => {
-    switch (difficulty) {
-        case EASY:
-            return 'Easy';
-        case MEDIUM:
-            return 'Medium';
-        case HARD:
-            return 'Hard';
-        default:
-            return 'Unknown';
-    }
 }
 
 function InstructionsModal({ gameEngine } : { gameEngine: GameEngine }) {
@@ -99,6 +86,7 @@ function App() {
     const gameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [cookies, setCookie] = useCookies(['difficulty']);
     const [difficulty, setDifficulty] = useState<Difficulty>(cookies.difficulty || EASY);
+    const [canvasResult, setCanvasResult] = useState<HTMLCanvasElement | null>(null);
 
     if (!gameEngineRef.current) {
         gameEngineRef.current = new GameEngine();
@@ -111,12 +99,12 @@ function App() {
         setSceneUpdateCounter(sceneUpdateCounter + 1);
     }
 
+    gameEngineRef.current.onGeneratedImageCallback = (canvas) => {
+        setCanvasResult(canvas);
+    }
+
     const gameEngine = gameEngineRef.current;
     const [generation, setGeneration] = useState(0);
-
-    const grid = gameEngine.grid.arraySync() as number[][];
-    const activeCells = gameEngine.activeCells.arraySync() as number[][];
-    const virusCells = gameEngine.virusCells.arraySync() as number[][];
 
     const replaceGameInterval = (delay: number) => {
         if (gameIntervalRef.current) {
@@ -339,14 +327,34 @@ function App() {
             </div>
             <>
                 <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={onClose}>
-                    <ModalContent>
+                    <ModalContent className="win-modal">
                         {(onClose) => (
                             <>
-                                { gameEngine.hasWon && gameWinMessage(
-                                    gameEngine.generation,
-                                    difficultyToString(difficulty)
-                                ) }
-                                { gameEngine.hasLost && gameLostMessage() }
+                                    <p>
+                                        { gameEngine.hasWon && gameWinMessage(
+                                            gameEngine.generation,
+                                            difficultyToString(difficulty)
+                                        ) }
+                                        { gameEngine.hasLost && gameLostMessage() }
+                                    </p>
+                                { canvasResult &&
+                                    <div>
+                                        <p className="text-right">
+                                            <Button
+                                                className="mt-4 mr-4"
+                                                onClick={() => {
+                                                canvasResult?.toBlob((blob) => {
+                                                    navigator.clipboard.write([
+                                                        new ClipboardItem({ "image/png": blob as Blob })
+                                                    ]);
+                                                }, "image/png");
+                                                }}>
+                                                Copy Image to Clipboard
+                                            </Button>
+                                        </p>
+                                        <p className="text-sm text-slate-500 text-right mr-4">Share your result!</p>
+                                    </div>
+                                }
                                 <ModalFooter>
                                     <Button color="primary" onPress={onClose}>
                                         Play Again
