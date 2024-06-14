@@ -139,6 +139,7 @@ function App() {
     const onClose = useCallback(() => {
         replaceGameInterval(GAME_INTERVAL);
         setBigShareImage(false);
+        setCanvasResult(null);
         gameEngineRef.current?.resetGame();
     }, []);
 
