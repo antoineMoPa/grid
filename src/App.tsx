@@ -263,7 +263,7 @@ function App() {
                 </div>
                 <div className="leave-trail mt-4">
                     <p>Use <span className="keyboard-shortcut">Shift + Arrows</span> to auto sweep.</p>
-                    <p>Trail Wall Size <span className="keyboard-shortcut">T</span></p>
+                    <p>Trail Wall Size</p>
                     <div>
                         <ButtonGroup size="sm">
                             { leaveTrailOptions.map((value) => (
