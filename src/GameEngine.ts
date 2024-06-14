@@ -606,7 +606,7 @@ export class GameEngine {
 
 
             const singleGameCanvas = document.createElement('canvas');
-            this.drawCanvas(singleGameCanvas);
+            headlessEngine.drawCanvas(singleGameCanvas);
             const columns = 3;
 
             if (i === 0) {
