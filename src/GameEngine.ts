@@ -6,6 +6,7 @@ tf.setBackend('webgl').then(() => {
 });
 
 const DEFAULT_VIRUS_MOVE_RATE = 0.2;
+const AUTO_SWEEP_DELAY = 20;
 
 export const difficultyToString = (difficulty: string) => {
     switch (difficulty) {
@@ -127,21 +128,11 @@ export class GameEngine {
     hasLost = false;
     virusMoveRate = DEFAULT_VIRUS_MOVE_RATE;
     trailSize = 0;
-    enableAutoSweep = window.innerWidth < 768;
     replay: ReplayState[] = [];
     onUpdateCallback = () => {};
     onGeneratedImageCallback = (_canvas: HTMLCanvasElement | null) => {};
 
     resultCanvas = document.createElement('canvas');
-
-    setEnableAutoSweep(value: boolean) {
-        this.enableAutoSweep = value;
-        this.onUpdateCallback();
-    }
-
-    toggleAutoSweep() {
-        this.setEnableAutoSweep(!this.enableAutoSweep);
-    }
 
     setTrailSize(value: number) {
         this.trailSize = value;
@@ -292,7 +283,7 @@ export class GameEngine {
             i += direction[0];
             j += direction[1];
 
-            delay += 30;
+            delay += AUTO_SWEEP_DELAY;
             distanceCounter++;
         }
 
@@ -450,18 +441,26 @@ export class GameEngine {
         this.onUpdateCallback();
     }
 
-    async onCellClick([i, j]: [number, number], {forceAutoSweep = false } = {}) {
+    focusCell([i, j]: [number, number]) {
+        const activeCells = this.activeCells.arraySync() as number[][];
+
+        if (activeCells[i][j] === 1) {
+            this.focusedCell = [i, j];
+        }
+
+        this.onUpdateCallback();
+    }
+
+    async autoSweepTo([i, j]: [number, number], {forceAutoSweep = false } = {}) {
         const activeCells = this.activeCells.arraySync() as number[][];
         const oldI = this.focusedCell[0];
         const oldJ = this.focusedCell[1];
 
-        if (this.enableAutoSweep || forceAutoSweep) {
-            // Auto Sweep up/down, then left right
-            const distanceI = Math.abs(i - oldI);
-            await this.autoSweep([Math.sign(i - oldI), 0], distanceI);
-            const distanceJ = Math.abs(j - oldJ);
-            await this.autoSweep([0, Math.sign(j - oldJ)], distanceJ);
-        }
+        // Auto Sweep up/down, then left right
+        const distanceI = Math.abs(i - oldI);
+        await this.autoSweep([Math.sign(i - oldI), 0], distanceI);
+        const distanceJ = Math.abs(j - oldJ);
+        await this.autoSweep([0, Math.sign(j - oldJ)], distanceJ);
 
         if (activeCells[i][j] === 1) {
             this.focusedCell = [i, j];
@@ -665,5 +664,11 @@ export class GameEngine {
         }
 
         return false;
+    }
+
+    screenCoordsToTableCoords([x, y]: [number, number]): [number, number] {
+        const i = Math.floor(y / tileSize);
+        const j = Math.floor(x / tileSize);
+        return [i, j];
     }
 }

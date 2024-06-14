@@ -80,7 +80,6 @@ function InstructionsModal({ gameEngine } : { gameEngine: GameEngine }) {
 }
 
 function App() {
-    const tableRef = useRef<HTMLTableElement | null>(null);
     const gameEngineRef = useRef<null | GameEngine>(null);
     const {isOpen, onOpen, onOpenChange} = useDisclosure();
     const gameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -158,21 +157,9 @@ function App() {
         gameEngine.difficulty = difficulty;
         gameEngine.resetGame();
         setCookie('difficulty', difficulty);
-    }, [difficulty, gameEngine, tableRef]);
+    }, [difficulty, gameEngine]);
 
     const leaveTrailOptions = [0, 10, 20, 50, 100, 200];
-
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key.toLowerCase() === 'p') {
-                gameEngine.toggleAutoSweep();
-            }
-        }
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        }
-    }, []);
 
     const handleTrailSizeChange = useCallback((value: number) => {
         gameEngine.setTrailSize(value);
@@ -220,10 +207,6 @@ function App() {
         const event = new CustomEvent('keyup', { detail: 'ArrowDown' });
         mobileKeySource.dispatchEvent(event);
     }, []);
-
-    const toggleAutoSweep = useCallback(() => {
-        gameEngine.toggleAutoSweep();
-    }, [gameEngine]);
 
     return (
         <>
@@ -277,12 +260,7 @@ function App() {
                     </ButtonGroup>
                 </div>
                 <div className="leave-trail mt-4">
-                    <Switch isSelected={gameEngine.enableAutoSweep} onValueChange={toggleAutoSweep}>
-                        Enable Auto Sweep <span className="keyboard-shortcut">P</span>
-                        <br/>
-                    </Switch>
-                    <p className="text-xs text-slate-500">You can always autosweep using Shift + Arrows</p>
-                    <br/>
+                    <p>Trail Wall Size <span className="keyboard-shortcut">T</span></p>
                     <div>
                         <ButtonGroup size="sm">
                             { leaveTrailOptions.map((value) => (
