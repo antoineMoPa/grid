@@ -1,3 +1,4 @@
+import { Muxer, FileSystemWritableFileStreamTarget } from 'mp4-muxer';
 import * as tf from '@tensorflow/tfjs';
 
 tf.setBackend('webgl').then(() => {
@@ -651,6 +652,59 @@ export class GameEngine {
         this.onGeneratedImageCallback(canvas);
     }
 
+    async generateShareVideo() {
+        let fileHandle = await window.showSaveFilePicker({
+            suggestedName: `video.mp4`,
+            types: [{
+                description: 'Video File',
+                accept: { 'video/mp4': ['.mp4'] }
+            }],
+        });
+        let fileStream = await fileHandle.createWritable();
+
+        const headlessEngine = new GameEngine();
+        const canvas = document.createElement('canvas');
+        canvas.width = this.WIDTH * tileSize;
+        canvas.height = this.HEIGHT * tileSize;
+
+        const muxer = new Muxer({
+            target: new FileSystemWritableFileStreamTarget(fileStream),
+            video: {
+                codec: 'avc',
+                width: canvas.width,
+                height: canvas.height,
+            },
+            fastStart: false
+        });
+
+        const videoEncoder = new VideoEncoder({
+            output: (chunk: EncodedVideoChunk, meta: EncodedVideoChunkMetadata): void => muxer.addVideoChunk(chunk, meta),
+            error: (e: any) => console.error(e)
+        });
+
+        videoEncoder.configure({
+            codec: 'avc1.42001f',
+            width: canvas.width,
+            height: canvas.height,
+            framerate: 30,
+            bitrate: 1e6
+        });
+
+        for (let i = 0; i < this.replay.length; i++) {
+            headlessEngine.restoreReplayState(this.replay[i]);
+            headlessEngine.drawCanvas(canvas);
+            const timestamp = i * 30 * 1000; // microseconds
+            const frame = new VideoFrame(canvas, { timestamp });
+
+            videoEncoder.encode(frame);
+            frame.close();
+        }
+
+        await videoEncoder.flush();
+        muxer.finalize();
+        await fileStream.close();
+    }
+
     detectGameStatus(): boolean {
         if (this.hasWon || this.hasLost) {
             return true;
@@ -667,14 +721,14 @@ export class GameEngine {
 
         if (virusCellsCount === 0) {
             this.hasWon = true;
-            this.saveState();
+            this.storeReplay();
             this.generateShareImage();
             return true;
         }
 
         if (activeCellsCount === 0) {
             this.hasLost = true;
-            this.saveState();
+            this.storeReplay();
             this.generateShareImage();
             return true;
         }

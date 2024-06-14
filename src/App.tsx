@@ -319,6 +319,11 @@ function App() {
                                         </p>
                                     </div>
                                 }
+                                <p className="text-center m-4 mobile-hidden">
+                                    <Button color="default" onPress={() => { gameEngine.generateShareVideo() }}>
+                                        Generate Video
+                                    </Button>
+                                </p>
                                 <ModalFooter>
                                     <Button color="primary" onPress={onClose}>
                                         Play Again

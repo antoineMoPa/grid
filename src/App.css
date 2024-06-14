@@ -90,6 +90,10 @@ button {
 }
 
 @media (max-width: 768px) {
+    .mobile-hidden {
+        display: none;
+    }
+
     .top-left-bar {
         position: static;
     }
