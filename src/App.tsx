@@ -150,14 +150,14 @@ function App() {
     }, []);
 
     useEffect(() => {
-        document.querySelectorAll('table')[0].focus();
+        document.querySelectorAll('canvas')[0].focus();
         if (gameEngine.difficulty === difficulty) {
             return;
         }
         gameEngine.difficulty = difficulty;
         gameEngine.resetGame();
         setCookie('difficulty', difficulty);
-    }, [difficulty, gameEngine]);
+    }, [difficulty, gameEngine, setCookie]);
 
     const leaveTrailOptions = [0, 10, 20, 50, 100, 200];
 
@@ -210,7 +210,9 @@ function App() {
 
     return (
         <>
-            <GameTable gameEngine={gameEngine}/>
+            <div className="main-game-table">
+                <GameTable gameEngine={gameEngine}/>
+            </div>
             <div className="mobile-ui">
                 <div className="arrow-keys mt-2">
                     <Button size="md"

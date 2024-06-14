@@ -1,5 +1,4 @@
 import * as tf from '@tensorflow/tfjs';
-import { renderGrid } from './renderGrid';
 
 tf.setBackend('webgl').then(() => {
     console.log('WebGL backend initialized');
@@ -19,6 +18,14 @@ export const difficultyToString = (difficulty: string) => {
         default:
             return 'Unknown';
     }
+}
+
+export const formatNumber = (num: number) => {
+    // Above 999, use K notation
+    if (num > 999) {
+        return (num / 1000).toFixed(0) + 'K';
+    }
+    return num.toString();
 }
 
 
@@ -47,6 +54,8 @@ const difficultyMap = {
 }
 
 export type ReplayState = {
+    WIDTH: number,
+    HEIGHT: number,
     grid: number[][],
     activeCells: number[][],
     virusCells: number[][],
@@ -532,6 +541,8 @@ export class GameEngine {
 
     saveState(): ReplayState {
         return {
+            WIDTH: this.WIDTH,
+            HEIGHT: this.HEIGHT,
             grid: this.grid.arraySync() as number[][],
             activeCells: this.activeCells.arraySync() as number[][],
             virusCells: this.virusCells.arraySync() as number[][],
@@ -546,6 +557,8 @@ export class GameEngine {
     }
 
     restoreReplayState(state: ReplayState) {
+        this.WIDTH = state.WIDTH;
+        this.HEIGHT = state.HEIGHT;
         this.grid = tf.tensor(state.grid);
         this.activeCells = tf.tensor(state.activeCells);
         this.virusCells = tf.tensor(state.virusCells);
@@ -564,15 +577,18 @@ export class GameEngine {
         const headlessEngine = new GameEngine();
         const canvas = this.resultCanvas;
         const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-        const headerSize = 120;
-        const margin = 10;
+
+        const headerSize = 240;
+        const margin = 20;
 
         const intermediateStepsCount = 4;
         const intermediateStepIndices = [];
 
 
         for (let i = 0; i < intermediateStepsCount; i++) {
-            intermediateStepIndices.push(Math.floor((i + 1) / intermediateStepsCount * this.replay.length));
+            intermediateStepIndices.push(
+                Math.floor(i / intermediateStepsCount * this.replay.length)
+            );
         }
 
         const replaysIndices = [
@@ -581,56 +597,56 @@ export class GameEngine {
             this.replay.length - 1
         ];
 
-        ctx.shadowColor="black";
-        ctx.shadowBlur=7;
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 7;
 
         for (let i = 0; i < replaysIndices.length; i++) {
             const replayIndex = replaysIndices[i];
             headlessEngine.restoreReplayState(this.replay[replayIndex]);
 
-            const image = await renderGrid(headlessEngine);
 
+            const singleGameCanvas = document.createElement('canvas');
+            this.drawCanvas(singleGameCanvas);
             const columns = 3;
 
             if (i === 0) {
-                canvas.width = image.width * columns + margin * (columns + 1);
-                canvas.height = headerSize + margin + (image.height + margin) * Math.ceil(replaysIndices.length / columns) + margin;
+                canvas.width = singleGameCanvas.width * columns + margin * (columns + 1);
+                canvas.height = headerSize + margin + (singleGameCanvas.height + margin) * Math.ceil(replaysIndices.length / columns) + margin;
                 // White background
                 ctx.fillStyle = '#242424';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
+            const x = margin + (singleGameCanvas.width + margin) * (i % columns);
+            const y = headerSize + (singleGameCanvas.height + margin) * Math.floor(i / columns);
 
-            const x = margin + (image.width + margin) * (i % columns);
-            const y = headerSize + (image.height + margin) * Math.floor(i / columns);
-
-            ctx.drawImage(image, x, y);
+            ctx.drawImage(singleGameCanvas, x, y);
 
             // Stats block
-            ctx.font = 'bold 10px Arial';
+            ctx.font = 'bold 20px Arial';
             ctx.textAlign = 'left';
             ctx.fillStyle = '#ffffff';
             const stats1 = `Generation: ${headlessEngine.generation}`;
-            ctx.fillText(stats1, x + 10, y + 20);
+            ctx.fillText(stats1, x + 20, y + 40);
             const stats2 = `You: ${headlessEngine.stats.activeCellCount}`;
-            ctx.fillText(stats2, x + 10, y + 30);
+            ctx.fillText(stats2, x + 20, y + 60);
             const stats3 = `Virus: ${headlessEngine.stats.virusCellCount}`;
-            ctx.fillText(stats3, x + 10, y + 40);
+            ctx.fillText(stats3, x + 20, y + 80);
         }
 
         // Draw header
         ctx.fillStyle = '#ffffff';
         const message = this.hasWon ? 'You won!' : 'Virus Won!'
         ctx.textAlign = 'center';
-        ctx.font = 'bold 30px Arial';
-        ctx.fillText(message, canvas.width / 2, headerSize / 2 - 15);
+        ctx.font = 'bold 60px Arial';
+        ctx.fillText(message, canvas.width / 2, headerSize / 2 - 30);
 
         // Write level
-        ctx.font = 'bold 10px Arial';
-        ctx.fillText('Level: ' + difficultyToString(this.difficulty), canvas.width / 2, headerSize / 2 + 15);
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText('Level: ' + difficultyToString(this.difficulty), canvas.width / 2, headerSize / 2 + 30);
 
-        ctx.font = 'bold 10px Arial';
-        ctx.fillText('Play at https://antoinemopa.github.io/grid/', canvas.width / 2, headerSize - 20);
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText('Play at https://antoinemopa.github.io/grid/', canvas.width / 2, headerSize - 40);
 
         this.onGeneratedImageCallback(canvas);
     }
@@ -670,5 +686,73 @@ export class GameEngine {
         const i = Math.floor(y / tileSize);
         const j = Math.floor(x / tileSize);
         return [i, j];
+    }
+
+    drawCanvas(canvas: HTMLCanvasElement) {
+        const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+        const w = this.WIDTH * (tileSize);
+        const h = this.HEIGHT * (tileSize);
+        canvas.width = w * window.devicePixelRatio;
+        canvas.height = h * window.devicePixelRatio;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+        const grid = this.grid.arraySync() as number[][];
+        const activeCells = this.activeCells.arraySync() as number[][];
+        const virusCells = this.virusCells.arraySync() as number[][];
+
+        // Dark background
+        ctx.fillStyle = '#242424';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < this.HEIGHT; i++) {
+            for (let j = 0; j < this.WIDTH; j++) {
+                let textColor = '#ffffff';
+                let drawText = false;
+                ctx.fillStyle = '#222222';
+                ctx.fillRect(j * tileSize, i * tileSize, tileSize, tileSize);
+
+                // focussed cell
+                if (this.focusedCell[0] === i && this.focusedCell[1] === j) {
+                    // Path: round rect 3px radius
+                    ctx.beginPath();
+                    ctx.roundRect(j * tileSize + 1, i * tileSize + 1, tileSize - 2, tileSize - 2, 3);
+
+                    ctx.fillStyle = '#3300ff';
+                    ctx.fill();
+
+                    // border
+                    ctx.strokeStyle = '#eee';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    drawText = true;
+                }
+                else if (activeCells[i][j] === 1) {
+                    ctx.fillStyle = '#aaa';
+                    ctx.fillRect(j * tileSize + 1, i * tileSize + 1, tileSize - 2, tileSize - 2);
+                    textColor = '#000000';
+                    drawText = true;
+                }
+                else if (virusCells[i][j] === 1) {
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(j * tileSize + 1, i * tileSize + 1, tileSize - 2, tileSize - 2);
+                    drawText = true;
+                }
+                else {
+                    ctx.fillStyle = '#333333';
+                    ctx.fillRect(j * tileSize + 1, i * tileSize + 1, tileSize - 2, tileSize - 2);
+                }
+
+                if (drawText) {
+                    ctx.fillStyle = textColor;
+                    ctx.font = '8px Sans-serif';
+                    ctx.textAlign = 'center';
+                    const text = formatNumber(grid[i][j]);
+                    ctx.fillText(text, j * tileSize + tileSize / 2, i * tileSize + tileSize / 2 + 3);
+                }
+            }
+        }
     }
 }
