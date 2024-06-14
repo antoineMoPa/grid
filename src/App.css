@@ -136,6 +136,7 @@ button {
     left: 20px;
     z-index: 10000;
     text-align: center;
+    overflow: scroll;
 
     .close-button{
         position: absolute;
