@@ -125,10 +125,10 @@ table {
     background: #eee;
     border-radius: 3px;
     box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
-    color: #333;
+    color: #000;
     font-size: 0.8rem;
     line-height: 0.8rem;
-    opacity: 0.5;
+    opacity: 0.8;
 }
 
 @media (max-width: 768px) {
