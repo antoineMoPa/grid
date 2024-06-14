@@ -126,8 +126,7 @@ export class GameEngine {
     hasWon = false;
     hasLost = false;
     virusMoveRate = DEFAULT_VIRUS_MOVE_RATE;
-    leaveTrail = false;
-    trailSize = 5;
+    trailSize = 0;
     enableAutoSweep = window.innerWidth < 768;
     replay: ReplayState[] = [];
     onUpdateCallback = () => {};
@@ -144,13 +143,9 @@ export class GameEngine {
         this.setEnableAutoSweep(!this.enableAutoSweep);
     }
 
-    setLeaveTrail(value: boolean) {
-        this.leaveTrail = value;
+    setTrailSize(value: number) {
+        this.trailSize = value;
         this.onUpdateCallback();
-    }
-
-    toggleLeaveTrail() {
-        this.setLeaveTrail(!this.leaveTrail);
     }
 
     stats: {
@@ -379,7 +374,7 @@ export class GameEngine {
             }
 
             if (enemyAround) {
-                const amountToAdd = this.leaveTrail ? trailSize - grid[s[0]][s[1]] : 0;
+                const amountToAdd = trailSize > 0 ? trailSize - grid[s[0]][s[1]] : 0;
                 if (trailSize > 0 && grid[d[0]][d[1]] > trailSize && amountToAdd > 0) {
                     grid[s[0]][s[1]] = amountToAdd;
                     grid[d[0]][d[1]] -= amountToAdd;

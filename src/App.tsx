@@ -160,12 +160,10 @@ function App() {
         setCookie('difficulty', difficulty);
     }, [difficulty, gameEngine, tableRef]);
 
-    // Listen to 't' key to toggle trail mode
+    const leaveTrailOptions = [0, 10, 20, 50, 100, 200];
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key.toLowerCase() === 't') {
-                gameEngine.toggleLeaveTrail();
-            }
             if (e.key.toLowerCase() === 'p') {
                 gameEngine.toggleAutoSweep();
             }
@@ -177,7 +175,7 @@ function App() {
     }, []);
 
     const handleTrailSizeChange = useCallback((value: number) => {
-        gameEngine.trailSize = value;
+        gameEngine.setTrailSize(value);
     }, [gameEngine]);
 
     const trailSize = gameEngine.trailSize;
@@ -225,10 +223,6 @@ function App() {
 
     const toggleAutoSweep = useCallback(() => {
         gameEngine.toggleAutoSweep();
-    }, [gameEngine]);
-
-    const toggleLeaveTrail = useCallback(() => {
-        gameEngine.toggleLeaveTrail();
     }, [gameEngine]);
 
     return (
@@ -289,32 +283,16 @@ function App() {
                     </Switch>
                     <p className="text-xs text-slate-500">You can always autosweep using Shift + Arrows</p>
                     <br/>
-                    <Switch isSelected={gameEngine.leaveTrail} onValueChange={toggleLeaveTrail}>
-                        Trail Wall Mode <span className="keyboard-shortcut">T</span>
-                        <br/>
-                    </Switch>
-                    { (gameEngine.leaveTrail) &&
-                        <div>
-                            <p>Tail size:</p>
-                            <ButtonGroup>
+                    <div>
+                        <ButtonGroup size="sm">
+                            { leaveTrailOptions.map((value) => (
                                 <Button size="sm"
-                                    className={classNames({ selected: trailSize == 5 })}
-                                    onClick={() => handleTrailSizeChange(5)}>5</Button>
-                                <Button size="sm"
-                                    className={classNames({ selected: trailSize == 10 })}
-                                    onClick={() => handleTrailSizeChange(10)}>10</Button>
-                                <Button size="sm"
-                                    className={classNames({ selected: trailSize == 50 })}
-                                    onClick={() => handleTrailSizeChange(50)}>50</Button>
-                                <Button size="sm"
-                                    className={classNames({ selected: trailSize == 100 })}
-                                    onClick={() => handleTrailSizeChange(100)}>100</Button>
-                                <Button size="sm"
-                                    className={classNames({ selected: trailSize == 200 })}
-                                    onClick={() => handleTrailSizeChange(200)}>200</Button>
-                            </ButtonGroup>
-                        </div>
-                    }
+                                    key={value}
+                                    className={classNames('p-0', { selected: trailSize == value })}
+                                    onClick={() => handleTrailSizeChange(value)}>{value}</Button>
+                            ))}
+                        </ButtonGroup>
+                    </div>
                     <p className="text-xs text-slate-500">Leave trail when around virus to help slow growth.</p>
                 </div>
             </div>

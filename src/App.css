@@ -211,3 +211,10 @@ table {
 .hidden {
     display: none;
 }
+
+
+.leave-trail {
+    button {
+        min-width: 3rem;
+    }
+}
