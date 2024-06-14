@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { GameEngine, EASY, MEDIUM, HARD, difficultyToString, Difficulty, mobileKeySource } from './GameEngine'
 
 import '@tensorflow/tfjs-backend-webgl';
-import {ButtonGroup, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Switch} from "@nextui-org/react";
+import { ButtonGroup, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
 
 import { GameTable } from './GameTable';
 

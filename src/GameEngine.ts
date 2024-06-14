@@ -451,7 +451,7 @@ export class GameEngine {
         this.onUpdateCallback();
     }
 
-    async autoSweepTo([i, j]: [number, number], {forceAutoSweep = false } = {}) {
+    async autoSweepTo([i, j]: [number, number]) {
         const activeCells = this.activeCells.arraySync() as number[][];
         const oldI = this.focusedCell[0];
         const oldJ = this.focusedCell[1];

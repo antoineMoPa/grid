@@ -35,7 +35,9 @@ export function GameTable({gameEngine} : { gameEngine: GameEngine }) {
             e.clientY - tableRef.current!.getBoundingClientRect().top
         ];
         const autoSweepEnd = gameEngine.screenCoordsToTableCoords(eventCoordsRelativeToTable);
-        gameEngine.focusCell(autoSweepStart);
+        if (autoSweepStart) {
+            gameEngine.focusCell(autoSweepStart);
+        }
         gameEngine.autoSweepTo(autoSweepEnd);
     }, [gameEngine, autoSweepStart]);
 
@@ -51,7 +53,7 @@ export function GameTable({gameEngine} : { gameEngine: GameEngine }) {
                         focused: gameEngine.focusedCell[0] === i && gameEngine.focusedCell[1] === j,
                         virus: virusCells[i][j] === 1,
                     })}
-                    onClick={(e) => gameEngine.autoSweepTo([i, j], { forceAutoSweep: e.shiftKey })}
+                    onClick={() => gameEngine.autoSweepTo([i, j])}
                 >
                     {virusCells[i][j] === 1 && formatNumber(grid[i][j])}
                     {activeCells[i][j] === 1 && formatNumber(grid[i][j])}
