@@ -678,7 +678,7 @@ export class GameEngine {
         });
 
         const videoEncoder = new VideoEncoder({
-            output: (chunk: EncodedVideoChunk, meta: EncodedVideoChunkMetadata): void => muxer.addVideoChunk(chunk, meta),
+            output: (chunk: EncodedVideoChunk, meta?: EncodedVideoChunkMetadata): void => muxer.addVideoChunk(chunk, meta),
             error: (e: any) => console.error(e)
         });
 
