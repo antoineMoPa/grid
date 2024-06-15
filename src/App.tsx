@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { GameEngine, EASY, MEDIUM, HARD, difficultyToString, Difficulty, mobileKeySource } from './GameEngine'
 
 import '@tensorflow/tfjs-backend-webgl';
-import { ButtonGroup, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
+import { ButtonGroup, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Progress } from "@nextui-org/react";
 import { FaPlay, FaPause, FaGithub, FaSkull } from "react-icons/fa6";
 
 import { GameTable } from './GameTable';
@@ -87,6 +87,7 @@ function App() {
     const [cookies, setCookie] = useCookies(['difficulty']);
     const [difficulty, setDifficulty] = useState<Difficulty>(cookies.difficulty || EASY);
     const [canvasResult, setCanvasResult] = useState<HTMLCanvasElement | null>(null);
+    const [renderProgress, setRenderProgress] = useState<number>(null);
 
     if (!gameEngineRef.current) {
         gameEngineRef.current = new GameEngine();
@@ -95,12 +96,18 @@ function App() {
     (window as any).gameEngine = gameEngineRef.current;
     const [sceneUpdateCounter, setSceneUpdateCounter] = useState(0);
 
-    gameEngineRef.current.onUpdateCallback = () => {
+    const gameEngine = gameEngineRef.current;
+
+    gameEngine.onUpdateCallback = () => {
         setSceneUpdateCounter(sceneUpdateCounter + 1);
     }
 
-    gameEngineRef.current.onGeneratedImageCallback = (canvas) => {
+    gameEngine.onGeneratedImageCallback = (canvas) => {
         setCanvasResult(canvas);
+    }
+
+    gameEngine.onRenderProgress = (value) => {
+        setRenderProgress(value);
     }
 
     const [bigShareImage, setBigShareImage] = useState(false);
@@ -109,7 +116,6 @@ function App() {
         setBigShareImage(!bigShareImage);
     }, [bigShareImage]);
 
-    const gameEngine = gameEngineRef.current;
     const [generation, setGeneration] = useState(0);
 
     const replaceGameInterval = (delay: number) => {
@@ -340,6 +346,11 @@ function App() {
                                         Generate Video
                                     </Button>
                                 </p>
+                                { renderProgress &&
+                                    <div className="m-4">
+                                        <Progress size="sm" value={renderProgress * 100} />
+                                    </div>
+                                }
                                 <ModalFooter>
                                     <Button color="primary" onPress={onClose}>
                                         Play Again

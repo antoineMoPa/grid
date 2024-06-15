@@ -142,6 +142,7 @@ export class GameEngine {
     paused = false;
     onUpdateCallback = () => {};
     onGeneratedImageCallback = (_canvas: HTMLCanvasElement | null) => {};
+    onRenderProgress = (_value: number) => {};
 
     resultCanvas = document.createElement('canvas');
 
@@ -675,6 +676,8 @@ export class GameEngine {
     }
 
     async generateShareVideo() {
+        this.onRenderProgress(0.01);
+
         let fileHandle = await window.showSaveFilePicker({
             suggestedName: `video.mp4`,
             types: [{
@@ -720,11 +723,15 @@ export class GameEngine {
 
             videoEncoder.encode(frame);
             frame.close();
+            this.onRenderProgress(i / this.replay.length * 0.5);
         }
 
         await videoEncoder.flush();
+        this.onRenderProgress(0.8);
         muxer.finalize();
+        this.onRenderProgress(1);
         await fileStream.close();
+        this.onRenderProgress(null);
     }
 
     detectGameStatus(): boolean {
