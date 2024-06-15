@@ -143,6 +143,7 @@ export class GameEngine {
     onUpdateCallback = () => {};
     onGeneratedImageCallback = (_canvas: HTMLCanvasElement | null) => {};
     onRenderProgress = (_value: number | null) => {};
+    cancelAutoSweep = false;
 
     resultCanvas = document.createElement('canvas');
 
@@ -216,6 +217,7 @@ export class GameEngine {
             if (e?.shiftKey) {
                 this.autoSweep([-1, 0])
             } else {
+                this.cancelAutoSweep = true;
                 this.moveTo({
                     initialCellPosition: this.focusedCell,
                     destinationCellPosition: [this.focusedCell[0] - 1, this.focusedCell[1]]
@@ -227,6 +229,7 @@ export class GameEngine {
             if (e?.shiftKey) {
                 this.autoSweep([1, 0])
             } else {
+                this.cancelAutoSweep = true;
                 this.moveTo({
                     initialCellPosition: this.focusedCell,
                     destinationCellPosition: [this.focusedCell[0] + 1, this.focusedCell[1]]
@@ -238,6 +241,7 @@ export class GameEngine {
             if (e?.shiftKey) {
                 this.autoSweep([0, -1])
             } else {
+                this.cancelAutoSweep = true;
                 this.moveTo({
                     initialCellPosition: this.focusedCell,
                     destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] - 1]
@@ -249,6 +253,7 @@ export class GameEngine {
             if (e?.shiftKey) {
                 this.autoSweep([0, 1])
             } else {
+                this.cancelAutoSweep = true;
                 this.moveTo({
                     initialCellPosition: this.focusedCell,
                     destinationCellPosition: [this.focusedCell[0], this.focusedCell[1] + 1]
@@ -274,7 +279,7 @@ export class GameEngine {
         let j = this.focusedCell[1];
         let distanceCounter = 0;
         let delay = 0;
-        let cancel = false;
+        this.cancelAutoSweep = false;
         const promises = [];
 
         while (distanceCounter < distance && this.checkBounds([i, j])) {
@@ -284,10 +289,10 @@ export class GameEngine {
             promises.push(new Promise<void>((resolve) => {
                 setTimeout(() => {
                     if (this.paused) {
-                        cancel = true;
+                        this.cancelAutoSweep = true;
                     }
 
-                    if (cancel) {
+                    if (this.cancelAutoSweep) {
                         resolve();
                         return;
                     }
@@ -298,7 +303,7 @@ export class GameEngine {
                     });
 
                     if (!result) {
-                        cancel = true;
+                        this.cancelAutoSweep = true;
                     }
 
                     resolve();
