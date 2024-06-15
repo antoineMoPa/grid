@@ -5,6 +5,7 @@ import { GameEngine, EASY, MEDIUM, HARD, difficultyToString, Difficulty, mobileK
 
 import '@tensorflow/tfjs-backend-webgl';
 import { ButtonGroup, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
+import { FaPlay, FaPause, FaGithub } from "react-icons/fa6";
 
 import { GameTable } from './GameTable';
 
@@ -209,6 +210,10 @@ function App() {
         mobileKeySource.dispatchEvent(event);
     }, []);
 
+    const togglePauseGame = useCallback(() => {
+        gameEngine.setPaused(!gameEngine.paused);
+    }, [gameEngine]);
+
     return (
         <>
             <div className="main-game-table">
@@ -245,6 +250,14 @@ function App() {
                             Click one of your other cells to continue.
                         </p>
                 }
+                <div className="mt-3">
+                    { !gameEngine.paused &&
+                        <Button onClick={togglePauseGame} className="pause"><FaPause/></Button>
+                    }
+                    { gameEngine.paused &&
+                        <Button onClick={togglePauseGame} className="play"><FaPlay/></Button>
+                    }
+                </div>
                 <div className="difficulty mt-4">
                     <p className="mb-2">Difficulty:</p>
                     <ButtonGroup>
@@ -287,7 +300,9 @@ function App() {
             <InstructionsModal gameEngine={gameEngine}/>
             <div className="bottom-left-bar">
                 <a href="https://github.com/antoineMoPa/grid" target="_blank">
-                    GitHub: antoineMoPa/grid
+                    <Button>
+                        <FaGithub className="inline"/>antoineMoPa/grid
+                    </Button>
                 </a>
             </div>
             <div className="bottom-right-bar">

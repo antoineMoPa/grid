@@ -139,6 +139,7 @@ export class GameEngine {
     virusMoveRate = DEFAULT_VIRUS_MOVE_RATE;
     trailSize = 0;
     replay: ReplayState[] = [];
+    paused = false;
     onUpdateCallback = () => {};
     onGeneratedImageCallback = (_canvas: HTMLCanvasElement | null) => {};
 
@@ -146,6 +147,11 @@ export class GameEngine {
 
     setTrailSize(value: number) {
         this.trailSize = value;
+        this.onUpdateCallback();
+    }
+
+    setPaused(value: boolean) {
+        this.paused = value;
         this.onUpdateCallback();
     }
 
@@ -259,6 +265,10 @@ export class GameEngine {
     }
 
     async autoSweep(direction: [number, number], distance = Infinity) {
+        if (this.paused) {
+            return;
+        }
+
         let i = this.focusedCell[0];
         let j = this.focusedCell[1];
         let distanceCounter = 0;
@@ -272,6 +282,10 @@ export class GameEngine {
 
             promises.push(new Promise<void>((resolve) => {
                 setTimeout(() => {
+                    if (this.paused) {
+                        cancel = true;
+                    }
+
                     if (cancel) {
                         resolve();
                         return;
@@ -395,6 +409,10 @@ export class GameEngine {
         {initialCellPosition, destinationCellPosition}:
         {initialCellPosition: [number, number], destinationCellPosition: [number, number]}
     ): boolean {
+        if (this.paused) {
+            return;
+        }
+
         const grid = this.grid.arraySync() as number[][];
         const playerCells = this.activeCells.arraySync() as number[][];
         const enemyCells = this.virusCells.arraySync() as number[][];
@@ -428,6 +446,10 @@ export class GameEngine {
         {initialCellPosition, destinationCellPosition}:
         {initialCellPosition: [number, number], destinationCellPosition: [number, number]}
     ) {
+        if (this.paused) {
+            return;
+        }
+
         const grid = this.grid.arraySync() as number[][];
         const enemyCells = this.activeCells.arraySync() as number[][];
         const playerCells = this.virusCells.arraySync() as number[][];
@@ -480,7 +502,7 @@ export class GameEngine {
     }
 
     step() {
-        if (this.hasWon || this.hasLost) {
+        if (this.hasWon || this.hasLost || this.paused) {
             return;
         }
 
