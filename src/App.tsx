@@ -87,7 +87,7 @@ function App() {
     const [cookies, setCookie] = useCookies(['difficulty']);
     const [difficulty, setDifficulty] = useState<Difficulty>(cookies.difficulty || EASY);
     const [canvasResult, setCanvasResult] = useState<HTMLCanvasElement | null>(null);
-    const [renderProgress, setRenderProgress] = useState<number>(null);
+    const [renderProgress, setRenderProgress] = useState<number|null>(null);
 
     if (!gameEngineRef.current) {
         gameEngineRef.current = new GameEngine();

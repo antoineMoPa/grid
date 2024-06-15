@@ -142,7 +142,7 @@ export class GameEngine {
     paused = false;
     onUpdateCallback = () => {};
     onGeneratedImageCallback = (_canvas: HTMLCanvasElement | null) => {};
-    onRenderProgress = (_value: number) => {};
+    onRenderProgress = (_value: number | null) => {};
 
     resultCanvas = document.createElement('canvas');
 
@@ -411,7 +411,7 @@ export class GameEngine {
         {initialCellPosition: [number, number], destinationCellPosition: [number, number]}
     ): boolean {
         if (this.paused) {
-            return;
+            return false;
         }
 
         const grid = this.grid.arraySync() as number[][];
