@@ -65,11 +65,6 @@ button {
     bottom: 0;
     left: 0;
     margin: 1rem;
-    opacity: 0.4;
-
-    &:hover {
-        opacity: 1;
-    }
 
     h2 {
         font-weight: 600;

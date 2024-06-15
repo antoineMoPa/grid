@@ -286,11 +286,9 @@ function App() {
             </div>
             <InstructionsModal gameEngine={gameEngine}/>
             <div className="bottom-left-bar">
-                <p className="text-xs">Like the repo on Github:<br/>
-                    <a href="https://github.com/antoineMoPa/grid" target="_blank">
-                        https://github.com/antoineMoPa/grid
-                    </a>
-                </p>
+                <a href="https://github.com/antoineMoPa/grid" target="_blank">
+                    GitHub: antoineMoPa/grid
+                </a>
             </div>
             <div className="bottom-right-bar">
                 <Button className="surrender" onClick={surrender}>Surrender</Button>
