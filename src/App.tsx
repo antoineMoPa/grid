@@ -5,7 +5,7 @@ import { GameEngine, EASY, MEDIUM, HARD, difficultyToString, Difficulty, mobileK
 
 import '@tensorflow/tfjs-backend-webgl';
 import { ButtonGroup, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
-import { FaPlay, FaPause, FaGithub } from "react-icons/fa6";
+import { FaPlay, FaPause, FaGithub, FaSkull } from "react-icons/fa6";
 
 import { GameTable } from './GameTable';
 
@@ -301,12 +301,15 @@ function App() {
             <div className="bottom-left-bar">
                 <a href="https://github.com/antoineMoPa/grid" target="_blank">
                     <Button>
-                        <FaGithub className="inline"/>antoineMoPa/grid
+                        <FaGithub/>antoineMoPa/grid
                     </Button>
                 </a>
             </div>
             <div className="bottom-right-bar">
-                <Button className="surrender" onClick={surrender}>Surrender</Button>
+                <Button className="surrender" onClick={surrender}>
+                    <FaSkull/>
+                    Surrender
+                </Button>
             </div>
             <>
                 <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={onClose} isDismissable={false}>
