@@ -5,7 +5,7 @@ import { GameEngine, EASY, MEDIUM, HARD, difficultyToString, Difficulty, mobileK
 
 import '@tensorflow/tfjs-backend-webgl';
 import { ButtonGroup, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Progress } from "@nextui-org/react";
-import { FaPlay, FaPause, FaGithub, FaSkull } from "react-icons/fa6";
+import { FaPlay, FaPause, FaGithub, FaSkull, FaForwardFast } from "react-icons/fa6";
 
 import { GameTable } from './GameTable';
 
@@ -220,6 +220,10 @@ function App() {
         gameEngine.setPaused(!gameEngine.paused);
     }, [gameEngine]);
 
+    const onFastForward = useCallback(() => {
+        gameEngine.fastForward(20);
+    }, [gameEngine]);
+
     return (
         <>
             <div className="main-game-table">
@@ -295,6 +299,9 @@ function App() {
                         </ButtonGroup>
                     </div>
                     <p className="text-xs text-slate-500">Leave trail when around virus to help slow growth.</p>
+                </div>
+                <div className="fast-forward mt-4">
+                    <Button onClick={onFastForward}><FaForwardFast/> Fast Forward</Button>
                 </div>
             </div>
             <div className="top-right-bar">

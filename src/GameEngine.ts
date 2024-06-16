@@ -507,6 +507,12 @@ export class GameEngine {
         this.onUpdateCallback();
     }
 
+    fastForward(steps: number) {
+        for (let i = 0; i < steps; i++) {
+            this.step();
+        }
+    }
+
     step() {
         if (this.hasWon || this.hasLost || this.paused) {
             return;
