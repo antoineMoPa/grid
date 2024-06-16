@@ -508,12 +508,13 @@ export class GameEngine {
     }
 
     fastForward(steps: number) {
-        for (let i = 0; i < steps; i++) {
-            this.step();
+        for (let i = 0; i < steps - 1; i++) {
+            this.step({ skipStoreReplay: true });
         }
+        this.step();
     }
 
-    step() {
+    step({ skipStoreReplay } = { skipStoreReplay: false }) {
         if (this.hasWon || this.hasLost || this.paused) {
             return;
         }
@@ -570,7 +571,9 @@ export class GameEngine {
                 this.generation++;
             }
 
-            this.storeReplay();
+            if (!skipStoreReplay) {
+                this.storeReplay();
+            }
         });
     }
 
